@@ -1,0 +1,2551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Builder Pro - AI Powered Resume Creator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Sinhala:wght@400;700&family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans Sinhala', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                        roboto: ['Roboto', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#7C3AED',
+                        accent: '#06B6D4',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* CV Template Styles */
+        .cv-modern { display: grid; grid-template-columns: 280px 1fr; min-height: 800px; }
+        .cv-modern-sidebar { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: white; padding: 2rem; }
+        .cv-modern-main { background: white; padding: 2.5rem; }
+        
+        .cv-simple { max-width: 700px; margin: 0 auto; background: white; padding: 3rem; }
+        .cv-simple h1 { font-size: 2.5rem; font-weight: 300; letter-spacing: -0.02em; text-align: center; margin-bottom: 0.5rem; }
+        .cv-simple .contact-bar { text-align: center; border-bottom: 2px solid #e5e7eb; padding-bottom: 1.5rem; margin-bottom: 2rem; }
+        
+        .cv-corporate { background: white; padding: 2.5rem; font-family: 'Georgia', serif; }
+        .cv-corporate-header { border-bottom: 3px solid #1e3a8a; padding-bottom: 1.5rem; margin-bottom: 2rem; }
+        .cv-corporate h1 { font-family: 'Playfair Display', serif; color: #1e3a8a; font-size: 2.2rem; }
+        .cv-corporate-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
+        
+        .cv-gulf { background: white; padding: 2.5rem; font-family: 'Arial', sans-serif; max-width: 800px; margin: 0 auto; }
+        .cv-gulf h1 { text-transform: uppercase; letter-spacing: 0.1em; font-size: 1.8rem; border-bottom: 1px solid #000; padding-bottom: 0.5rem; }
+        .cv-gulf h2 { text-transform: uppercase; font-size: 0.9rem; letter-spacing: 0.05em; border-bottom: 1px solid #ccc; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+        .cv-gulf ul { list-style-type: square; margin-left: 1.25rem; }
+        
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(79, 70, 229, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(79, 70, 229, 0.6); }
+        }
+        .ai-glow { animation: pulse-glow 2s infinite; }
+        
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+        .ai-cursor::after {
+            content: '|';
+            animation: blink 1s step-end infinite;
+            color: #4F46E5;
+            font-weight: bold;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+        
+        /* UI Components */
+        .step-indicator { transition: all 0.3s ease; }
+        .step-active { background: #4F46E5; color: white; border-color: #4F46E5; }
+        .step-completed { background: #10B981; color: white; border-color: #10B981; }
+        
+        .template-card { transition: all 0.3s ease; cursor: pointer; border: 2px solid transparent; }
+        .template-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .template-card.selected { border-color: #4F46E5; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
+        
+        .skill-tag { display: inline-flex; align-items: center; background: #EEF2FF; color: #4F46E5; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; margin: 0.25rem; }
+        .skill-tag button { margin-left: 0.5rem; opacity: 0.6; }
+        .skill-tag button:hover { opacity: 1; }
+        
+        .progress-ring { transform: rotate(-90deg); }
+        .progress-ring-circle { transition: stroke-dashoffset 0.5s ease; }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c7c7c7; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a0a0a0; }
+        
+        /* Print */
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; }
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800 antialiased">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full bg-white/90 backdrop-blur-md border-b border-gray-200 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center cursor-pointer" onclick="App.navigate('home')">
+                    <div class="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center text-white font-bold text-xl mr-3">
+                        CV
+                    </div>
+                    <span class="font-bold text-xl tracking-tight text-gray-900">Builder<span class="text-primary">Pro</span></span>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-8">
+                    <button onclick="App.navigate('home')" class="text-gray-600 hover:text-primary font-medium transition" data-i18n="nav_home">Home</button>
+                    <button onclick="App.navigate('templates')" class="text-gray-600 hover:text-primary font-medium transition" data-i18n="nav_templates">Templates</button>
+                    <button onclick="App.navigate('jobmatcher')" class="text-gray-600 hover:text-primary font-medium transition" data-i18n="nav_jobs">Job Matcher</button>
+                    <button onclick="App.navigate('coverletter')" class="text-gray-600 hover:text-primary font-medium transition" data-i18n="nav_cover">Cover Letter</button>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button onclick="App.toggleLanguage()" class="px-3 py-1.5 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50 transition flex items-center gap-2">
+                        <i class="fas fa-globe"></i>
+                        <span id="lang-label">EN</span>
+                    </button>
+                    
+                    <div id="auth-buttons">
+                        <button onclick="App.navigate('auth')" class="px-4 py-2 rounded-lg bg-primary text-white font-medium hover:bg-indigo-600 transition shadow-lg shadow-primary/30" data-i18n="nav_login">
+                            Login / Register
+                        </button>
+                    </div>
+                    <div id="user-menu" class="hidden flex items-center gap-3">
+                        <button onclick="App.navigate('dashboard')" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition">
+                            <i class="fas fa-user-circle text-primary text-lg"></i>
+                            <span class="font-medium text-sm" id="user-name">User</span>
+                        </button>
+                        <button onclick="App.logout()" class="text-gray-400 hover:text-red-500 transition">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Spacer for fixed nav -->
+    <div class="h-16 no-print"></div>
+
+    <!-- ==================== PAGES ==================== -->
+
+    <!-- HOME PAGE -->
+    <div id="page-home" class="page">
+        <!-- Hero -->
+        <div class="relative overflow-hidden bg-white">
+            <div class="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50"></div>
+            <div class="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-0 left-0 -mb-20 -ml-20 w-72 h-72 bg-secondary/10 rounded-full blur-3xl"></div>
+            
+            <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24">
+                <div class="text-center max-w-4xl mx-auto">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 border border-indigo-100 text-primary font-medium text-sm mb-8 animate-fade-in">
+                        <i class="fas fa-sparkles"></i>
+                        <span data-i18n="hero_badge">AI-Powered CV Creation</span>
+                    </div>
+                    
+                    <h1 class="text-5xl md:text-7xl font-extrabold text-gray-900 tracking-tight mb-6 animate-fade-in" style="animation-delay: 0.1s">
+                        <span data-i18n="hero_title_1">Create Professional CV</span><br>
+                        <span class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent" data-i18n="hero_title_2">in 2 Minutes</span>
+                    </h1>
+                    
+                    <p class="text-xl text-gray-600 mb-10 max-w-2xl mx-auto animate-fade-in" style="animation-delay: 0.2s" data-i18n="hero_subtitle">
+                        AI writes your professional summary, optimizes for ATS, and generates a stunning PDF. Supports Sinhala & English.
+                    </p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style="animation-delay: 0.3s">
+                        <button onclick="App.startBuilding()" class="px-8 py-4 bg-primary text-white rounded-xl font-semibold text-lg hover:bg-indigo-600 transition shadow-xl shadow-primary/30 flex items-center justify-center gap-2">
+                            <i class="fas fa-magic"></i>
+                            <span data-i18n="btn_create_cv">Create My CV</span>
+                        </button>
+                        <button onclick="App.navigate('templates')" class="px-8 py-4 bg-white text-gray-700 border-2 border-gray-200 rounded-xl font-semibold text-lg hover:border-primary hover:text-primary transition flex items-center justify-center gap-2">
+                            <i class="fas fa-eye"></i>
+                            <span data-i18n="btn_view_templates">View Templates</span>
+                        </button>
+                    </div>
+                    
+                    <div class="mt-12 flex items-center justify-center gap-8 text-sm text-gray-500 animate-fade-in" style="animation-delay: 0.4s">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span data-i18n="feat_ats">ATS-Friendly</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span data-i18n="feat_ai">AI Writing</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span data-i18n="feat_pdf">PDF Export</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span>QR Code</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Templates Preview -->
+        <div class="py-20 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4" data-i18n="templates_title">Professional Templates</h2>
+                    <p class="text-gray-600" data-i18n="templates_subtitle">Choose from modern, simple, corporate, and Gulf-optimized designs</p>
+                </div>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <!-- Modern -->
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition cursor-pointer group" onclick="App.selectTemplateAndBuild('modern')">
+                        <div class="h-64 bg-gradient-to-br from-indigo-900 to-purple-900 p-4 relative">
+                            <div class="absolute inset-0 flex items-center justify-center opacity-50 group-hover:opacity-70 transition">
+                                <div class="w-32 h-40 bg-white rounded shadow-lg transform rotate-3"></div>
+                            </div>
+                            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur px-3 py-1 rounded-full text-white text-xs font-medium">
+                                Popular
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="font-bold text-lg mb-1" data-i18n="tpl_modern">Modern</h3>
+                            <p class="text-sm text-gray-500 mb-4" data-i18n="tpl_modern_desc">Clean two-column with sidebar</p>
+                            <div class="flex items-center text-primary font-medium text-sm">
+                                <span data-i18n="btn_use">Use Template</span>
+                                <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Simple -->
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition cursor-pointer group" onclick="App.selectTemplateAndBuild('simple')">
+                        <div class="h-64 bg-gray-100 p-4 relative">
+                            <div class="absolute inset-0 flex items-center justify-center opacity-50 group-hover:opacity-70 transition">
+                                <div class="w-32 h-40 bg-white rounded shadow-lg border-2 border-gray-200"></div>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="font-bold text-lg mb-1" data-i18n="tpl_simple">Simple</h3>
+                            <p class="text-sm text-gray-500 mb-4" data-i18n="tpl_simple_desc">Minimalist & elegant</p>
+                            <div class="flex items-center text-primary font-medium text-sm">
+                                <span data-i18n="btn_use">Use Template</span>
+                                <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Corporate -->
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition cursor-pointer group" onclick="App.selectTemplateAndBuild('corporate')">
+                        <div class="h-64 bg-blue-50 p-4 relative">
+                            <div class="absolute inset-0 flex items-center justify-center opacity-50 group-hover:opacity-70 transition">
+                                <div class="w-32 h-40 bg-white rounded shadow-lg border-t-4 border-blue-800"></div>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="font-bold text-lg mb-1" data-i18n="tpl_corporate">Corporate</h3>
+                            <p class="text-sm text-gray-500 mb-4" data-i18n="tpl_corporate_desc">Traditional & formal</p>
+                            <div class="flex items-center text-primary font-medium text-sm">
+                                <span data-i18n="btn_use">Use Template</span>
+                                <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Gulf -->
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition cursor-pointer group" onclick="App.selectTemplateAndBuild('gulf')">
+                        <div class="h-64 bg-slate-100 p-4 relative">
+                            <div class="absolute inset-0 flex items-center justify-center opacity-50 group-hover:opacity-70 transition">
+                                <div class="w-32 h-40 bg-white rounded shadow-lg font-serif text-[6px] p-2 leading-tight">
+                                    NAME<br>EXPERIENCE<br>EDUCATION
+                                </div>
+                            </div>
+                            <div class="absolute top-4 right-4 bg-green-500/90 backdrop-blur px-3 py-1 rounded-full text-white text-xs font-medium">
+                                ATS Best
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="font-bold text-lg mb-1" data-i18n="tpl_gulf">Gulf / ATS</h3>
+                            <p class="text-sm text-gray-500 mb-4" data-i18n="tpl_gulf_desc">Optimized for recruiters</p>
+                            <div class="flex items-center text-primary font-medium text-sm">
+                                <span data-i18n="btn_use">Use Template</span>
+                                <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- How It Works -->
+        <div class="py-20 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4" data-i18n="how_title">How It Works</h2>
+                </div>
+                <div class="grid md:grid-cols-4 gap-8">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center text-primary text-2xl mx-auto mb-4">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                        <h3 class="font-semibold mb-2" data-i18n="step1_title">Fill the Form</h3>
+                        <p class="text-sm text-gray-500" data-i18n="step1_desc">Enter your details, education, and experience</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center text-secondary text-2xl mx-auto mb-4">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <h3 class="font-semibold mb-2" data-i18n="step2_title">AI Enhances</h3>
+                        <p class="text-sm text-gray-500" data-i18n="step2_desc">Our AI writes professional summaries & optimizes text</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-cyan-100 rounded-2xl flex items-center justify-center text-accent text-2xl mx-auto mb-4">
+                            <i class="fas fa-palette"></i>
+                        </div>
+                        <h3 class="font-semibold mb-2" data-i18n="step3_title">Choose Template</h3>
+                        <p class="text-sm text-gray-500" data-i18n="step3_desc">Pick from modern, corporate, or ATS-friendly designs</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center text-green-600 text-2xl mx-auto mb-4">
+                            <i class="fas fa-download"></i>
+                        </div>
+                        <h3 class="font-semibold mb-2" data-i18n="step4_title">Download PDF</h3>
+                        <p class="text-sm text-gray-500" data-i18n="step4_desc">Get your CV with QR code & portfolio link</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Grid -->
+        <div class="py-20 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary text-xl mb-4">
+                            <i class="fas fa-language"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2" data-i18n="feat_lang_title">Sinhala + English</h3>
+                        <p class="text-gray-600 text-sm" data-i18n="feat_lang_desc">Full bilingual support. Create CVs in Sinhala or English with proper fonts and formatting.</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary text-xl mb-4">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2" data-i18n="feat_ai_title">AI Text Writing</h3>
+                        <p class="text-gray-600 text-sm" data-i18n="feat_ai_desc">AI generates professional summaries, job descriptions, and cover letters tailored to your industry.</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center text-accent text-xl mb-4">
+                            <i class="fas fa-qrcode"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2" data-i18n="feat_qr_title">QR Code & Portfolio</h3>
+                        <p class="text-gray-600 text-sm" data-i18n="feat_qr_desc">Add a QR code linking to your online portfolio or LinkedIn profile directly on your CV.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUTH PAGE -->
+    <div id="page-auth" class="page hidden min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 p-4">
+        <div class="w-full max-w-md">
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <div class="text-center mb-8">
+                    <div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-xl mx-auto mb-4">CV</div>
+                    <h2 class="text-2xl font-bold text-gray-900" data-i18n="auth_welcome">Welcome to CV Builder Pro</h2>
+                    <p class="text-gray-500 mt-2" data-i18n="auth_subtitle">Create professional resumes with AI</p>
+                </div>
+                
+                <div class="flex mb-6 bg-gray-100 p-1 rounded-lg">
+                    <button onclick="App.switchAuthTab('login')" id="tab-login" class="flex-1 py-2 rounded-md text-sm font-medium transition bg-white shadow-sm text-gray-900" data-i18n="tab_login">Login</button>
+                    <button onclick="App.switchAuthTab('register')" id="tab-register" class="flex-1 py-2 rounded-md text-sm font-medium transition text-gray-500" data-i18n="tab_register">Register</button>
+                </div>
+                
+                <form id="login-form" onsubmit="App.handleLogin(event)">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="label_email">Email</label>
+                            <input type="email" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="you@example.com">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="label_password">Password</label>
+                            <input type="password" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="••••••••">
+                        </div>
+                        <button type="submit" class="w-full py-3 bg-primary text-white rounded-lg font-semibold hover:bg-indigo-600 transition shadow-lg shadow-primary/30" data-i18n="btn_login">Login</button>
+                    </div>
+                </form>
+                
+                <form id="register-form" class="hidden" onsubmit="App.handleRegister(event)">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="label_name">Full Name</label>
+                            <input type="text" id="reg-name" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="John Doe">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="label_email">Email</label>
+                            <input type="email" id="reg-email" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="you@example.com">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="label_password">Password</label>
+                            <input type="password" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="••••••••">
+                        </div>
+                        <button type="submit" class="w-full py-3 bg-primary text-white rounded-lg font-semibold hover:bg-indigo-600 transition shadow-lg shadow-primary/30" data-i18n="btn_register">Create Account</button>
+                    </div>
+                </form>
+                
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <button onclick="App.simulateLinkedIn()" class="w-full py-3 bg-[#0077b5] text-white rounded-lg font-medium hover:bg-[#006396] transition flex items-center justify-center gap-2">
+                        <i class="fab fa-linkedin"></i>
+                        <span data-i18n="btn_linkedin">Import from LinkedIn</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD PAGE -->
+    <div id="page-dashboard" class="page hidden min-h-screen bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex flex-col lg:flex-row gap-8">
+                <!-- Sidebar -->
+                <div class="lg:w-64 flex-shrink-0">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-2">
+                        <button onclick="App.navigate('dashboard')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary font-medium transition">
+                            <i class="fas fa-home w-5"></i>
+                            <span data-i18n="dash_overview">Overview</span>
+                        </button>
+                        <button onclick="App.startBuilding()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-50 text-gray-700 transition">
+                            <i class="fas fa-plus-circle w-5 text-green-500"></i>
+                            <span data-i18n="dash_create">Create CV</span>
+                        </button>
+                        <button onclick="App.navigate('dashboard'); App.showSavedCVs()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-50 text-gray-700 transition">
+                            <i class="fas fa-file-alt w-5 text-blue-500"></i>
+                            <span data-i18n="dash_saved">Saved CVs</span>
+                        </button>
+                        <button onclick="App.navigate('coverletter')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-50 text-gray-700 transition">
+                            <i class="fas fa-envelope w-5 text-purple-500"></i>
+                            <span data-i18n="dash_cover">Cover Letters</span>
+                        </button>
+                        <button onclick="App.navigate('jobmatcher')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-50 text-gray-700 transition">
+                            <i class="fas fa-briefcase w-5 text-orange-500"></i>
+                            <span data-i18n="dash_jobs">Job Matcher</span>
+                        </button>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-primary to-secondary rounded-2xl p-6 mt-4 text-white">
+                        <h4 class="font-semibold mb-2" data-i18n="pro_title">Go Pro</h4>
+                        <p class="text-sm text-white/80 mb-4" data-i18n="pro_desc">Unlock all templates and AI features</p>
+                        <button class="w-full py-2 bg-white text-primary rounded-lg font-medium text-sm hover:bg-gray-100 transition" data-i18n="btn_upgrade">Upgrade Now</button>
+                    </div>
+                </div>
+                
+                <!-- Main Content -->
+                <div class="flex-1">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                            <span data-i18n="dash_welcome">Welcome back,</span> <span id="dash-username">User</span>
+                        </h1>
+                        <p class="text-gray-500" data-i18n="dash_subtitle">Manage your CVs and job applications</p>
+                    </div>
+                    
+                    <!-- Stats -->
+                    <div class="grid sm:grid-cols-3 gap-4 mb-8">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <span class="text-2xl font-bold text-gray-900" id="stat-cvs">0</span>
+                            </div>
+                            <p class="text-sm text-gray-500" data-i18n="stat_cvs">CVs Created</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <span class="text-2xl font-bold text-gray-900" id="stat-letters">0</span>
+                            </div>
+                            <p class="text-sm text-gray-500" data-i18n="stat_letters">Cover Letters</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center text-green-600">
+                                    <i class="fas fa-briefcase"></i>
+                                </div>
+                                <span class="text-2xl font-bold text-gray-900" id="stat-jobs">12</span>
+                            </div>
+                            <p class="text-sm text-gray-500" data-i18n="stat_jobs">Job Matches</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent CVs -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="font-bold text-lg" data-i18n="recent_cvs">Recent CVs</h3>
+                            <button onclick="App.startBuilding()" class="text-primary text-sm font-medium hover:underline" data-i18n="btn_new_cv">+ New CV</button>
+                        </div>
+                        <div id="saved-cvs-list" class="space-y-4">
+                            <div class="text-center py-12 text-gray-400">
+                                <i class="fas fa-folder-open text-4xl mb-3"></i>
+                                <p data-i18n="no_cvs">No CVs yet. Create your first one!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BUILDER PAGE -->
+    <div id="page-builder" class="page hidden min-h-screen bg-gray-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Progress Steps -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between max-w-3xl mx-auto">
+                    <div class="step-item flex flex-col items-center">
+                        <div id="step-1-indicator" class="w-10 h-10 rounded-full border-2 border-primary bg-primary text-white flex items-center justify-center font-bold step-indicator step-active">1</div>
+                        <span class="text-xs mt-2 font-medium text-primary" data-i18n="step_personal">Personal</span>
+                    </div>
+                    <div class="flex-1 h-0.5 bg-gray-200 mx-4 relative">
+                        <div id="progress-line-1" class="absolute left-0 top-0 h-full bg-primary transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <div class="step-item flex flex-col items-center">
+                        <div id="step-2-indicator" class="w-10 h-10 rounded-full border-2 border-gray-300 text-gray-400 flex items-center justify-center font-bold step-indicator">2</div>
+                        <span class="text-xs mt-2 font-medium text-gray-500" data-i18n="step_education">Education</span>
+                    </div>
+                    <div class="flex-1 h-0.5 bg-gray-200 mx-4 relative">
+                        <div id="progress-line-2" class="absolute left-0 top-0 h-full bg-primary transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <div class="step-item flex flex-col items-center">
+                        <div id="step-3-indicator" class="w-10 h-10 rounded-full border-2 border-gray-300 text-gray-400 flex items-center justify-center font-bold step-indicator">3</div>
+                        <span class="text-xs mt-2 font-medium text-gray-500" data-i18n="step_skills">Skills</span>
+                    </div>
+                    <div class="flex-1 h-0.5 bg-gray-200 mx-4 relative">
+                        <div id="progress-line-3" class="absolute left-0 top-0 h-full bg-primary transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <div class="step-item flex flex-col items-center">
+                        <div id="step-4-indicator" class="w-10 h-10 rounded-full border-2 border-gray-300 text-gray-400 flex items-center justify-center font-bold step-indicator">4</div>
+                        <span class="text-xs mt-2 font-medium text-gray-500" data-i18n="step_experience">Experience</span>
+                    </div>
+                    <div class="flex-1 h-0.5 bg-gray-200 mx-4 relative">
+                        <div id="progress-line-4" class="absolute left-0 top-0 h-full bg-primary transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <div class="step-item flex flex-col items-center">
+                        <div id="step-5-indicator" class="w-10 h-10 rounded-full border-2 border-gray-300 text-gray-400 flex items-center justify-center font-bold step-indicator">5</div>
+                        <span class="text-xs mt-2 font-medium text-gray-500" data-i18n="step_template">Template</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid lg:grid-cols-5 gap-8">
+                <!-- Form Area -->
+                <div class="lg:col-span-3">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+                        
+                        <!-- Step 1: Personal Info -->
+                        <div id="form-step-1" class="form-step">
+                            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                                <i class="fas fa-user text-primary"></i>
+                                <span data-i18n="title_personal">Personal Information</span>
+                            </h2>
+                            
+                            <div class="space-y-5">
+                                <div class="flex items-center gap-6 mb-6">
+                                    <div class="relative">
+                                        <div id="photo-preview" class="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 overflow-hidden border-4 border-white shadow-lg">
+                                            <i class="fas fa-user text-3xl"></i>
+                                        </div>
+                                        <label class="absolute bottom-0 right-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:bg-indigo-600 transition">
+                                            <i class="fas fa-camera text-xs"></i>
+                                            <input type="file" accept="image/*" class="hidden" onchange="App.handlePhotoUpload(event)">
+                                        </label>
+                                    </div>
+                                    <div class="flex-1">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="label_photo">Profile Photo</label>
+                                        <p class="text-xs text-gray-500" data-i18n="hint_photo">Optional. Recommended for Modern & Corporate templates.</p>
+                                        <label class="inline-flex items-center mt-2 cursor-pointer">
+                                            <input type="checkbox" id="include-photo" checked onchange="App.togglePhoto()" class="rounded border-gray-300 text-primary focus:ring-primary">
+                                            <span class="ml-2 text-sm text-gray-600" data-i18n="label_include_photo">Include photo in CV</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="label_fullname">Full Name *</label>
+                                        <input type="text" id="field-name" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="John Doe">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="label_title">Professional Title *</label>
+                                        <input type="text" id="field-title" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="Software Engineer">
+                                    </div>
+                                </div>
+                                
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="label_email">Email *</label>
+                                        <input type="email" id="field-email" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="john@example.com">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="label_phone">Phone</label>
+                                        <input type="tel" id="field-phone" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="+94 77 123 4567">
+                                    </div>
+                                </div>
+                                
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">LinkedIn</label>
+                                        <div class="relative">
+                                            <i class="fab fa-linkedin absolute left-3 top-3 text-gray-400"></i>
+                                            <input type="url" id="field-linkedin" class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="linkedin.com/in/username">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="label_portfolio">Portfolio / Website</label>
+                                        <div class="relative">
+                                            <i class="fas fa-globe absolute left-3 top-3 text-gray-400"></i>
+                                            <input type="url" id="field-portfolio" class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="yourportfolio.com">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="label_address">Address</label>
+                                    <input type="text" id="field-address" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="Colombo, Sri Lanka">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="label_summary">Professional Summary</label>
+                                    <div class="relative">
+                                        <textarea id="field-summary" rows="4" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="Brief overview of your professional background..."></textarea>
+                                        <button type="button" onclick="App.generateSummary()" class="absolute bottom-3 right-3 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-xs font-medium hover:bg-primary/20 transition flex items-center gap-1">
+                                            <i class="fas fa-magic"></i>
+                                            <span data-i18n="btn_ai_write">AI Write</span>
+                                        </button>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1" id="summary-status"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Education -->
+                        <div id="form-step-2" class="form-step hidden">
+                            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                                <i class="fas fa-graduation-cap text-primary"></i>
+                                <span data-i18n="title_education">Education</span>
+                            </h2>
+                            <div id="education-list" class="space-y-4"></div>
+                            <button type="button" onclick="App.addEducation()" class="mt-4 w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-primary hover:text-primary transition flex items-center justify-center gap-2">
+                                <i class="fas fa-plus"></i>
+                                <span data-i18n="btn_add_edu">Add Education</span>
+                            </button>
+                        </div>
+
+                        <!-- Step 3: Skills -->
+                        <div id="form-step-3" class="form-step hidden">
+                            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                                <i class="fas fa-tools text-primary"></i>
+                                <span data-i18n="title_skills">Skills</span>
+                            </h2>
+                            
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="label_skills">Add Your Skills</label>
+                                <div class="flex gap-2 mb-3">
+                                    <input type="text" id="skill-input" class="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="e.g. JavaScript, Project Management, Sinhala Typing" onkeypress="if(event.key==='Enter'){App.addSkill();event.preventDefault();}">
+                                    <button type="button" onclick="App.addSkill()" class="px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-indigo-600 transition">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div id="skills-container" class="flex flex-wrap gap-2 min-h-[60px] p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                    <span class="text-sm text-gray-400 italic" id="no-skills-msg" data-i18n="hint_skills">Start typing to add skills...</span>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-indigo-50 rounded-xl p-4 border border-indigo-100">
+                                <h4 class="font-medium text-primary mb-2 flex items-center gap-2">
+                                    <i class="fas fa-lightbulb"></i>
+                                    <span data-i18n="ai_suggest_title">AI Suggested Skills</span>
+                                </h4>
+                                <div id="ai-suggested-skills" class="flex flex-wrap gap-2">
+                                    <button type="button" onclick="App.suggestSkills()" class="text-sm text-primary hover:underline" data-i18n="btn_get_suggestions">Get suggestions based on your title</button>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="label_languages">Languages</label>
+                                <div class="grid md:grid-cols-2 gap-3">
+                                    <input type="text" id="lang-1" class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none" placeholder="Sinhala - Native">
+                                    <input type="text" id="lang-2" class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none" placeholder="English - Fluent">
+                                    <input type="text" id="lang-3" class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none" placeholder="Tamil - Conversational">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Experience -->
+                        <div id="form-step-4" class="form-step hidden">
+                            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                                <i class="fas fa-briefcase text-primary"></i>
+                                <span data-i18n="title_experience">Work Experience</span>
+                            </h2>
+                            <div id="experience-list" class="space-y-4"></div>
+                            <button type="button" onclick="App.addExperience()" class="mt-4 w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-primary hover:text-primary transition flex items-center justify-center gap-2">
+                                <i class="fas fa-plus"></i>
+                                <span data-i18n="btn_add_exp">Add Experience</span>
+                            </button>
+                        </div>
+
+                        <!-- Step 5: Template & Settings -->
+                        <div id="form-step-5" class="form-step hidden">
+                            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                                <i class="fas fa-palette text-primary"></i>
+                                <span data-i18n="title_template">Choose Template</span>
+                            </h2>
+                            
+                            <div class="grid sm:grid-cols-2 gap-4 mb-8">
+                                <div class="template-card rounded-xl border-2 border-gray-200 p-4" data-template="modern" onclick="App.selectTemplate('modern')">
+                                    <div class="h-32 bg-gradient-to-br from-indigo-900 to-purple-900 rounded-lg mb-3 relative overflow-hidden">
+                                        <div class="absolute inset-0 flex items-center justify-center">
+                                            <div class="w-20 h-28 bg-white rounded shadow-md transform -rotate-2"></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <h4 class="font-semibold" data-i18n="tpl_modern">Modern</h4>
+                                            <p class="text-xs text-gray-500" data-i18n="tpl_modern_desc">Two-column with sidebar</p>
+                                        </div>
+                                        <div class="w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center check-circle">
+                                            <div class="w-3 h-3 rounded-full bg-primary hidden check-fill"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="template-card rounded-xl border-2 border-gray-200 p-4" data-template="simple" onclick="App.selectTemplate('simple')">
+                                    <div class="h-32 bg-gray-100 rounded-lg mb-3 relative overflow-hidden">
+                                        <div class="absolute inset-0 flex items-center justify-center">
+                                            <div class="w-20 h-28 bg-white rounded shadow-md border border-gray-200"></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <h4 class="font-semibold" data-i18n="tpl_simple">Simple</h4>
+                                            <p class="text-xs text-gray-500" data-i18n="tpl_simple_desc">Minimalist single column</p>
+                                        </div>
+                                        <div class="w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center check-circle">
+                                            <div class="w-3 h-3 rounded-full bg-primary hidden check-fill"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="template-card rounded-xl border-2 border-gray-200 p-4" data-template="corporate" onclick="App.selectTemplate('corporate')">
+                                    <div class="h-32 bg-blue-50 rounded-lg mb-3 relative overflow-hidden">
+                                        <div class="absolute inset-0 flex items-center justify-center">
+                                            <div class="w-20 h-28 bg-white rounded shadow-md border-t-4 border-blue-800"></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <h4 class="font-semibold" data-i18n="tpl_corporate">Corporate</h4>
+                                            <p class="text-xs text-gray-500" data-i18n="tpl_corporate_desc">Traditional formal layout</p>
+                                        </div>
+                                        <div class="w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center check-circle">
+                                            <div class="w-3 h-3 rounded-full bg-primary hidden check-fill"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="template-card rounded-xl border-2 border-gray-200 p-4" data-template="gulf" onclick="App.selectTemplate('gulf')">
+                                    <div class="h-32 bg-slate-100 rounded-lg mb-3 relative overflow-hidden">
+                                        <div class="absolute inset-0 flex items-center justify-center">
+                                            <div class="w-20 h-28 bg-white rounded shadow-md text-[5px] p-1 font-serif leading-tight">CV<br>EXP<br>EDU</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <h4 class="font-semibold" data-i18n="tpl_gulf">Gulf / ATS</h4>
+                                            <p class="text-xs text-gray-500" data-i18n="tpl_gulf_desc">Optimized for recruiters</p>
+                                        </div>
+                                        <div class="w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center check-circle">
+                                            <div class="w-3 h-3 rounded-full bg-primary hidden check-fill"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-4 bg-gray-50 rounded-xl p-6 border border-gray-200">
+                                <h4 class="font-semibold mb-4" data-i18n="title_settings">CV Settings</h4>
+                                
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-medium text-sm" data-i18n="setting_ats">ATS-Friendly Mode</p>
+                                        <p class="text-xs text-gray-500" data-i18n="setting_ats_desc">Removes graphics, uses standard fonts for applicant tracking systems</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="setting-ats" class="sr-only peer" onchange="App.toggleATS()">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:ring-4 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-medium text-sm" data-i18n="setting_qr">Include QR Code</p>
+                                        <p class="text-xs text-gray-500" data-i18n="setting_qr_desc">Links to your portfolio or LinkedIn</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="setting-qr" class="sr-only peer" onchange="App.toggleQR()">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:ring-4 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                    </label>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="label_color">Accent Color</label>
+                                    <div class="flex gap-3">
+                                        <button type="button" onclick="App.setColor('#4F46E5')" class="w-8 h-8 rounded-full bg-[#4F46E5] ring-2 ring-offset-2 ring-transparent hover:ring-gray-300 focus:ring-primary transition"></button>
+                                        <button type="button" onclick="App.setColor('#7C3AED')" class="w-8 h-8 rounded-full bg-[#7C3AED] ring-2 ring-offset-2 ring-transparent hover:ring-gray-300 focus:ring-primary transition"></button>
+                                        <button type="button" onclick="App.setColor('#059669')" class="w-8 h-8 rounded-full bg-[#059669] ring-2 ring-offset-2 ring-transparent hover:ring-gray-300 focus:ring-primary transition"></button>
+                                        <button type="button" onclick="App.setColor('#DC2626')" class="w-8 h-8 rounded-full bg-[#DC2626] ring-2 ring-offset-2 ring-transparent hover:ring-gray-300 focus:ring-primary transition"></button>
+                                        <button type="button" onclick="App.setColor('#1e3a8a')" class="w-8 h-8 rounded-full bg-[#1e3a8a] ring-2 ring-offset-2 ring-transparent hover:ring-gray-300 focus:ring-primary transition"></button>
+                                        <input type="color" id="custom-color" onchange="App.setColor(this.value)" class="w-8 h-8 rounded-full overflow-hidden cursor-pointer border-0 p-0">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Navigation Buttons -->
+                        <div class="flex justify-between mt-8 pt-6 border-t border-gray-200">
+                            <button type="button" id="btn-prev" onclick="App.prevStep()" class="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition hidden" data-i18n="btn_back">Back</button>
+                            <div class="flex-1"></div>
+                            <button type="button" id="btn-next" onclick="App.nextStep()" class="px-8 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-indigo-600 transition shadow-lg shadow-primary/30 flex items-center gap-2">
+                                <span data-i18n="btn_next">Next Step</span>
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <button type="button" id="btn-generate" onclick="App.generateCV()" class="hidden px-8 py-2.5 bg-gradient-to-r from-primary to-secondary text-white rounded-lg font-medium hover:opacity-90 transition shadow-lg shadow-primary/30 flex items-center gap-2 ai-glow">
+                                <i class="fas fa-magic"></i>
+                                <span data-i18n="btn_generate">Generate CV with AI</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Preview -->
+                <div class="lg:col-span-2">
+                    <div class="sticky top-24">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-semibold text-sm text-gray-700" data-i18n="live_preview">Live Preview</h3>
+                                <span class="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-md font-medium" id="ats-score">ATS: 85%</span>
+                            </div>
+                            <div class="bg-gray-100 rounded-lg p-4 overflow-auto max-h-[800px]">
+                                <div id="cv-preview-container" class="transform origin-top scale-[0.6] md:scale-[0.55] lg:scale-[0.5] transition-transform">
+                                    <!-- CV content injected here -->
+                                </div>
+                            </div>
+                            <div class="mt-4 flex gap-2">
+                                <button onclick="App.downloadPDF()" class="flex-1 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-indigo-600 transition flex items-center justify-center gap-2 text-sm">
+                                    <i class="fas fa-download"></i>
+                                    <span data-i18n="btn_download">Download PDF</span>
+                                </button>
+                                <button onclick="App.navigate('preview')" class="flex-1 py-2.5 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition text-sm" data-i18n="btn_full_preview">Full Preview</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FULL PREVIEW PAGE -->
+    <div id="page-preview" class="page hidden min-h-screen bg-gray-100 py-8">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="flex justify-between items-center mb-6 no-print">
+                <button onclick="App.navigate('builder')" class="flex items-center gap-2 text-gray-600 hover:text-primary transition">
+                    <i class="fas fa-arrow-left"></i>
+                    <span data-i18n="btn_back_builder">Back to Editor</span>
+                </button>
+                <div class="flex gap-3">
+                    <button onclick="App.downloadPDF()" class="px-6 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-indigo-600 transition shadow-lg flex items-center gap-2">
+                        <i class="fas fa-download"></i>
+                        <span data-i18n="btn_download_pdf">Download PDF</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="full-cv-preview" class="bg-white shadow-2xl mx-auto" style="max-width: 210mm; min-height: 297mm;">
+                <!-- Full CV rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- TEMPLATES PAGE -->
+    <div id="page-templates" class="page hidden min-h-screen bg-gray-50 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h1 class="text-4xl font-bold text-gray-900 mb-4" data-i18n="templates_gallery_title">Template Gallery</h1>
+                <p class="text-gray-600 max-w-2xl mx-auto" data-i18n="templates_gallery_subtitle">Choose the perfect design for your industry and career level</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Modern -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition group">
+                    <div class="h-80 bg-gradient-to-br from-indigo-900 to-purple-900 p-6 relative">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="w-48 h-64 bg-white rounded shadow-2xl transform rotate-2 p-4 text-[8px] leading-tight overflow-hidden">
+                                <div class="flex h-full">
+                                    <div class="w-1/3 bg-indigo-900 h-full mr-2"></div>
+                                    <div class="flex-1 space-y-2">
+                                        <div class="h-3 bg-gray-800 w-3/4"></div>
+                                        <div class="h-2 bg-gray-400 w-full"></div>
+                                        <div class="h-2 bg-gray-400 w-5/6"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <button onclick="App.selectTemplateAndBuild('modern')" class="px-6 py-3 bg-white text-gray-900 rounded-xl font-semibold shadow-lg transform scale-90 group-hover:scale-100 transition" data-i18n="btn_use_template">Use This Template</button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-lg" data-i18n="tpl_modern">Modern</h3>
+                            <span class="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-md font-medium">Popular</span>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-4" data-i18n="tpl_modern_long">Best for creative industries, tech, and marketing professionals. Features a colored sidebar with skills and contact info.</p>
+                        <div class="flex items-center gap-4 text-xs text-gray-400">
+                            <span><i class="fas fa-image mr-1"></i> Photo</span>
+                            <span><i class="fas fa-palette mr-1"></i> Color</span>
+                            <span><i class="fas fa-qrcode mr-1"></i> QR</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Simple -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition group">
+                    <div class="h-80 bg-gray-100 p-6 relative">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="w-48 h-64 bg-white rounded shadow-2xl p-6 text-[8px] leading-tight">
+                                <div class="h-4 bg-gray-800 w-1/2 mx-auto mb-2"></div>
+                                <div class="h-2 bg-gray-400 w-2/3 mx-auto mb-4"></div>
+                                <div class="border-t border-b border-gray-200 py-2 mb-2">
+                                    <div class="h-2 bg-gray-300 w-full mb-1"></div>
+                                    <div class="h-2 bg-gray-300 w-5/6"></div>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="h-3 bg-gray-700 w-1/3"></div>
+                                    <div class="h-2 bg-gray-300 w-full"></div>
+                                    <div class="h-2 bg-gray-300 w-4/5"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <button onclick="App.selectTemplateAndBuild('simple')" class="px-6 py-3 bg-white text-gray-900 rounded-xl font-semibold shadow-lg transform scale-90 group-hover:scale-100 transition" data-i18n="btn_use_template">Use This Template</button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-lg" data-i18n="tpl_simple">Simple</h3>
+                            <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md font-medium">Clean</span>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-4" data-i18n="tpl_simple_long">Minimalist design with lots of whitespace. Perfect for academic, medical, and executive positions.</p>
+                        <div class="flex items-center gap-4 text-xs text-gray-400">
+                            <span><i class="fas fa-image mr-1"></i> Photo</span>
+                            <span><i class="fas fa-font mr-1"></i> Serif</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Corporate -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition group">
+                    <div class="h-80 bg-blue-50 p-6 relative">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="w-48 h-64 bg-white rounded shadow-2xl border-t-8 border-blue-900 p-4 text-[8px]">
+                                <div class="h-4 bg-blue-900 w-2/3 mb-1"></div>
+                                <div class="h-2 bg-gray-500 w-1/2 mb-3"></div>
+                                <div class="flex gap-2">
+                                    <div class="flex-1 space-y-1">
+                                        <div class="h-2 bg-blue-800 w-1/2 mb-1"></div>
+                                        <div class="h-1.5 bg-gray-300 w-full"></div>
+                                        <div class="h-1.5 bg-gray-300 w-4/5"></div>
+                                    </div>
+                                    <div class="w-16 space-y-1">
+                                        <div class="h-2 bg-blue-800 w-full mb-1"></div>
+                                        <div class="h-1.5 bg-gray-300 w-full"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <button onclick="App.selectTemplateAndBuild('corporate')" class="px-6 py-3 bg-white text-gray-900 rounded-xl font-semibold shadow-lg transform scale-90 group-hover:scale-100 transition" data-i18n="btn_use_template">Use This Template</button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-lg" data-i18n="tpl_corporate">Corporate</h3>
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-md font-medium">Formal</span>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-4" data-i18n="tpl_corporate_long">Traditional layout with serif fonts. Ideal for banking, law, government, and senior management roles.</p>
+                        <div class="flex items-center gap-4 text-xs text-gray-400">
+                            <span><i class="fas fa-image mr-1"></i> Photo</span>
+                            <span><i class="fas fa-columns mr-1"></i> 2-Column</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Gulf/ATS -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition group">
+                    <div class="h-80 bg-slate-100 p-6 relative">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="w-48 h-64 bg-white rounded shadow-2xl p-4 text-[7px] font-sans leading-tight">
+                                <div class="h-3 bg-black w-2/3 mb-1 uppercase font-bold"></div>
+                                <div class="border-b border-black mb-2"></div>
+                                <div class="h-2 bg-gray-700 w-1/3 mb-1 uppercase font-bold"></div>
+                                <div class="h-1.5 bg-gray-400 w-full mb-0.5"></div>
+                                <div class="h-1.5 bg-gray-400 w-5/6 mb-2"></div>
+                                <div class="h-2 bg-gray-700 w-1/3 mb-1 uppercase font-bold"></div>
+                                <div class="h-1.5 bg-gray-400 w-full mb-0.5"></div>
+                                <div class="h-1.5 bg-gray-400 w-4/5"></div>
+                            </div>
+                        </div>
+                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <button onclick="App.selectTemplateAndBuild('gulf')" class="px-6 py-3 bg-white text-gray-900 rounded-xl font-semibold shadow-lg transform scale-90 group-hover:scale-100 transition" data-i18n="btn_use_template">Use This Template</button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-lg" data-i18n="tpl_gulf">Gulf / ATS</h3>
+                            <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-md font-medium">ATS Best</span>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-4" data-i18n="tpl_gulf_long">Machine-readable format optimized for Gulf countries and applicant tracking systems. No graphics.</p>
+                        <div class="flex items-center gap-4 text-xs text-gray-400">
+                            <span><i class="fas fa-robot mr-1"></i> ATS</span>
+                            <span><i class="fas fa-list mr-1"></i> Standard</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JOB MATCHER PAGE -->
+    <div id="page-jobmatcher" class="page hidden min-h-screen bg-gray-50 py-12">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h1 class="text-4xl font-bold text-gray-900 mb-4" data-i18n="job_title">AI Job Matcher</h1>
+                <p class="text-gray-600" data-i18n="job_subtitle">Upload your CV or use your saved one to find matching jobs</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="md:col-span-1">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-24">
+                        <h3 class="font-bold mb-4" data-i18n="job_select_cv">Select Your CV</h3>
+                        <select id="matcher-cv-select" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none mb-4">
+                            <option value="">-- Select a CV --</option>
+                        </select>
+                        
+                        <div class="border-t border-gray-200 pt-4 mb-4">
+                            <p class="text-xs text-gray-500 mb-2" data-i18n="job_or">Or paste your skills:</p>
+                            <textarea id="matcher-skills" rows="4" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none text-sm" placeholder="JavaScript, React, Node.js, Project Management..."></textarea>
+                        </div>
+                        
+                        <button onclick="App.findJobs()" class="w-full py-3 bg-primary text-white rounded-lg font-medium hover:bg-indigo-600 transition shadow-lg shadow-primary/30 flex items-center justify-center gap-2">
+                            <i class="fas fa-search"></i>
+                            <span data-i18n="btn_find_jobs">Find Matching Jobs</span>
+                        </button>
+                        
+                        <div class="mt-6 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                            <h4 class="font-medium text-primary text-sm mb-2" data-i18n="job_tips_title">Tips</h4>
+                            <ul class="text-xs text-gray-600 space-y-1 list-disc list-inside">
+                                <li data-i18n="job_tip1">Add more skills for better matches</li>
+                                <li data-i18n="job_tip2">Keep your CV updated</li>
+                                <li data-i18n="job_tip3">Use industry-standard keywords</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="md:col-span-2">
+                    <div id="job-results" class="space-y-4">
+                        <div class="text-center py-20 text-gray-400">
+                            <i class="fas fa-briefcase text-5xl mb-4 opacity-30"></i>
+                            <p data-i18n="job_empty">Select your CV and click "Find Matching Jobs" to see results</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COVER LETTER PAGE -->
+    <div id="page-coverletter" class="page hidden min-h-screen bg-gray-50 py-12">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h1 class="text-4xl font-bold text-gray-900 mb-4" data-i18n="cl_title">AI Cover Letter Generator</h1>
+                <p class="text-gray-600" data-i18n="cl_subtitle">Generate tailored cover letters in seconds</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+                    <div class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="cl_select_cv">Select CV</label>
+                            <select id="cl-cv-select" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none">
+                                <option value="">-- Select a CV --</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="cl_company">Company Name</label>
+                            <input type="text" id="cl-company" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none" placeholder="TechCorp Inc.">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="cl_job_title">Job Title</label>
+                            <input type="text" id="cl-job-title" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none" placeholder="Senior Software Engineer">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="cl_job_desc">Job Description</label>
+                            <textarea id="cl-job-desc" rows="4" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none" placeholder="Paste the job description here..."></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="cl_tone">Tone</label>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="App.setCLTone('professional')" class="cl-tone-btn flex-1 py-2 rounded-lg border-2 border-primary bg-primary/10 text-primary font-medium text-sm transition" data-tone="professional" data-i18n="tone_professional">Professional</button>
+                                <button type="button" onclick="App.setCLTone('friendly')" class="cl-tone-btn flex-1 py-2 rounded-lg border-2 border-gray-200 text-gray-600 font-medium text-sm hover:border-gray-300 transition" data-tone="friendly" data-i18n="tone_friendly">Friendly</button>
+                                <button type="button" onclick="App.setCLTone('assertive')" class="cl-tone-btn flex-1 py-2 rounded-lg border-2 border-gray-200 text-gray-600 font-medium text-sm hover:border-gray-300 transition" data-tone="assertive" data-i18n="tone_assertive">Assertive</button>
+                            </div>
+                        </div>
+                        
+                        <button onclick="App.generateCoverLetter()" class="w-full py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-lg font-medium hover:opacity-90 transition shadow-lg flex items-center justify-center gap-2">
+                            <i class="fas fa-magic"></i>
+                            <span data-i18n="btn_generate_cl">Generate Cover Letter</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 sticky top-24">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold" data-i18n="cl_preview">Preview</h3>
+                            <button onclick="App.downloadCoverLetterPDF()" id="btn-download-cl" class="hidden text-sm text-primary hover:underline flex items-center gap-1">
+                                <i class="fas fa-download"></i>
+                                <span data-i18n="btn_download">Download</span>
+                            </button>
+                        </div>
+                        <div id="cl-preview" class="prose prose-sm max-w-none text-gray-700 font-serif leading-relaxed min-h-[400px] whitespace-pre-wrap"></div>
+                        <div id="cl-generating" class="hidden text-center py-20">
+                            <div class="inline-flex items-center gap-2 text-primary">
+                                <i class="fas fa-circle-notch fa-spin"></i>
+                                <span class="ai-cursor" data-i18n="cl_generating">AI is writing your letter...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI GENERATING MODAL -->
+    <div id="ai-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
+            <div class="w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white text-3xl mx-auto mb-6 ai-glow">
+                <i class="fas fa-robot"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2" data-i18n="ai_generating_title">AI is Crafting Your CV</h3>
+            <p class="text-gray-500 mb-6" data-i18n="ai_generating_desc">Optimizing wording, checking ATS compatibility, and formatting...</p>
+            
+            <div class="space-y-3 text-left mb-6">
+                <div class="flex items-center gap-3 text-sm" id="ai-step-1">
+                    <i class="fas fa-circle-notch fa-spin text-primary"></i>
+                    <span class="text-gray-600" data-i18n="ai_step1">Analyzing your profile...</span>
+                </div>
+                <div class="flex items-center gap-3 text-sm opacity-40" id="ai-step-2">
+                    <i class="fas fa-circle text-gray-300"></i>
+                    <span class="text-gray-600" data-i18n="ai_step2">Writing professional summary...</span>
+                </div>
+                <div class="flex items-center gap-3 text-sm opacity-40" id="ai-step-3">
+                    <i class="fas fa-circle text-gray-300"></i>
+                    <span class="text-gray-600" data-i18n="ai_step3">Optimizing for ATS keywords...</span>
+                </div>
+                <div class="flex items-center gap-3 text-sm opacity-40" id="ai-step-4">
+                    <i class="fas fa-circle text-gray-300"></i>
+                    <span class="text-gray-600" data-i18n="ai_step4">Applying template & formatting...</span>
+                </div>
+            </div>
+            
+            <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div id="ai-progress" class="bg-gradient-to-r from-primary to-secondary h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== JAVASCRIPT ==================== -->
+    <script>
+        const App = {
+            state: {
+                lang: localStorage.getItem('lang') || 'en',
+                user: JSON.parse(localStorage.getItem('user') || 'null'),
+                cvs: JSON.parse(localStorage.getItem('cvs') || '[]'),
+                coverLetters: JSON.parse(localStorage.getItem('coverLetters') || '[]'),
+                currentStep: 1,
+                currentCV: {
+                    personal: {},
+                    education: [],
+                    experience: [],
+                    skills: [],
+                    languages: [],
+                    template: 'modern',
+                    color: '#4F46E5',
+                    settings: { atsFriendly: false, includeQR: false, includePhoto: true },
+                    photoData: null
+                },
+                clTone: 'professional'
+            },
+
+            translations: {
+                en: {
+                    nav_home: 'Home', nav_templates: 'Templates', nav_jobs: 'Job Matcher', nav_cover: 'Cover Letter', nav_login: 'Login / Register',
+                    hero_badge: 'AI-Powered CV Creation', hero_title_1: 'Create Professional CV', hero_title_2: 'in 2 Minutes',
+                    hero_subtitle: 'AI writes your professional summary, optimizes for ATS, and generates a stunning PDF. Supports Sinhala & English.',
+                    btn_create_cv: 'Create My CV', btn_view_templates: 'View Templates',
+                    feat_ats: 'ATS-Friendly', feat_ai: 'AI Writing', feat_pdf: 'PDF Export',
+                    templates_title: 'Professional Templates', templates_subtitle: 'Choose from modern, simple, corporate, and Gulf-optimized designs',
+                    tpl_modern: 'Modern', tpl_modern_desc: 'Clean two-column with sidebar',
+                    tpl_simple: 'Simple', tpl_simple_desc: 'Minimalist & elegant',
+                    tpl_corporate: 'Corporate', tpl_corporate_desc: 'Traditional & formal',
+                    tpl_gulf: 'Gulf / ATS', tpl_gulf_desc: 'Optimized for recruiters',
+                    how_title: 'How It Works',
+                    step1_title: 'Fill the Form', step1_desc: 'Enter your details, education, and experience',
+                    step2_title: 'AI Enhances', step2_desc: 'Our AI writes professional summaries & optimizes text',
+                    step3_title: 'Choose Template', step3_desc: 'Pick from modern, corporate, or ATS-friendly designs',
+                    step4_title: 'Download PDF', step4_desc: 'Get your CV with QR code & portfolio link',
+                    feat_lang_title: 'Sinhala + English', feat_lang_desc: 'Full bilingual support. Create CVs in Sinhala or English with proper fonts and formatting.',
+                    feat_ai_title: 'AI Text Writing', feat_ai_desc: 'AI generates professional summaries, job descriptions, and cover letters tailored to your industry.',
+                    feat_qr_title: 'QR Code & Portfolio', feat_qr_desc: 'Add a QR code linking to your online portfolio or LinkedIn profile directly on your CV.',
+                    auth_welcome: 'Welcome to CV Builder Pro', auth_subtitle: 'Create professional resumes with AI',
+                    tab_login: 'Login', tab_register: 'Register',
+                    label_email: 'Email', label_password: 'Password', label_name: 'Full Name',
+                    btn_login: 'Login', btn_register: 'Create Account', btn_linkedin: 'Import from LinkedIn',
+                    dash_overview: 'Overview', dash_create: 'Create CV', dash_saved: 'Saved CVs',
+                    dash_cover: 'Cover Letters', dash_jobs: 'Job Matcher',
+                    dash_welcome: 'Welcome back,', dash_subtitle: 'Manage your CVs and job applications',
+                    stat_cvs: 'CVs Created', stat_letters: 'Cover Letters', stat_jobs: 'Job Matches',
+                    recent_cvs: 'Recent CVs', btn_new_cv: '+ New CV', no_cvs: 'No CVs yet. Create your first one!',
+                    step_personal: 'Personal', step_education: 'Education', step_skills: 'Skills',
+                    step_experience: 'Experience', step_template: 'Template',
+                    title_personal: 'Personal Information', title_education: 'Education',
+                    title_skills: 'Skills', title_experience: 'Work Experience',
+                    title_template: 'Choose Template', title_settings: 'CV Settings',
+                    label_fullname: 'Full Name', label_title: 'Professional Title',
+                    label_phone: 'Phone', label_address: 'Address',
+                    label_portfolio: 'Portfolio / Website', label_summary: 'Professional Summary',
+                    label_photo: 'Profile Photo', hint_photo: 'Optional. Recommended for Modern & Corporate templates.',
+                    label_include_photo: 'Include photo in CV',
+                    btn_ai_write: 'AI Write', btn_add_edu: 'Add Education', btn_add_exp: 'Add Experience',
+                    label_skills: 'Add Your Skills', hint_skills: 'Start typing to add skills...',
+                    ai_suggest_title: 'AI Suggested Skills', btn_get_suggestions: 'Get suggestions based on your title',
+                    label_languages: 'Languages',
+                    setting_ats: 'ATS-Friendly Mode', setting_ats_desc: 'Removes graphics, uses standard fonts for applicant tracking systems',
+                    setting_qr: 'Include QR Code', setting_qr_desc: 'Links to your portfolio or LinkedIn',
+                    label_color: 'Accent Color',
+                    btn_back: 'Back', btn_next: 'Next Step', btn_generate: 'Generate CV with AI',
+                    live_preview: 'Live Preview', btn_download: 'Download PDF', btn_full_preview: 'Full Preview',
+                    btn_back_builder: 'Back to Editor',
+                    templates_gallery_title: 'Template Gallery', templates_gallery_subtitle: 'Choose the perfect design for your industry and career level',
+                    tpl_modern_long: 'Best for creative industries, tech, and marketing professionals. Features a colored sidebar with skills and contact info.',
+                    tpl_simple_long: 'Minimalist design with lots of whitespace. Perfect for academic, medical, and executive positions.',
+                    tpl_corporate_long: 'Traditional layout with serif fonts. Ideal for banking, law, government, and senior management roles.',
+                    tpl_gulf_long: 'Machine-readable format optimized for Gulf countries and applicant tracking systems. No graphics.',
+                    btn_use_template: 'Use This Template',
+                    job_title: 'AI Job Matcher', job_subtitle: 'Upload your CV or use your saved one to find matching jobs',
+                    job_select_cv: 'Select Your CV', job_or: 'Or paste your skills:',
+                    btn_find_jobs: 'Find Matching Jobs', job_tips_title: 'Tips',
+                    job_tip1: 'Add more skills for better matches', job_tip2: 'Keep your CV updated', job_tip3: 'Use industry-standard keywords',
+                    job_empty: 'Select your CV and click "Find Matching Jobs" to see results',
+                    cl_title: 'AI Cover Letter Generator', cl_subtitle: 'Generate tailored cover letters in seconds',
+                    cl_select_cv: 'Select CV', cl_company: 'Company Name', cl_job_title: 'Job Title',
+                    cl_job_desc: 'Job Description', cl_tone: 'Tone',
+                    tone_professional: 'Professional', tone_friendly: 'Friendly', tone_assertive: 'Assertive',
+                    btn_generate_cl: 'Generate Cover Letter', cl_preview: 'Preview', cl_generating: 'AI is writing your letter...',
+                    ai_generating_title: 'AI is Crafting Your CV', ai_generating_desc: 'Optimizing wording, checking ATS compatibility, and formatting...',
+                    ai_step1: 'Analyzing your profile...', ai_step2: 'Writing professional summary...',
+                    ai_step3: 'Optimizing for ATS keywords...', ai_step4: 'Applying template & formatting...',
+                    btn_use: 'Use Template', pro_title: 'Go Pro', pro_desc: 'Unlock all templates and AI features', btn_upgrade: 'Upgrade Now'
+                },
+                si: {
+                    nav_home: 'මුල් පිටුව', nav_templates: 'ටෙම්ප්ලේට්', nav_jobs: 'රැකියා ගැළපීම', nav_cover: 'ආවරණ පත', nav_login: 'පිවිසෙන්න / ලියාපදිංචි වන්න',
+                    hero_badge: 'AI-බලගතු CV සාදනය', hero_title_1: 'වෘත්තීය CV සාදන්න', hero_title_2: 'මිනිත්තු 2කින්',
+                    hero_subtitle: 'AI ඔබේ වෘත්තීය සාරාංශය ලියයි, ATS සඳහා විශේෂාංග ගත කරයි, සුන්දර PDF එකක් සාදයි. සිංහල සහ ඉංග්‍රීසි භාෂා දෙකම සහාය දක්වයි.',
+                    btn_create_cv: 'මගේ CV සාදන්න', btn_view_templates: 'ටෙම්ප්ලේට් බලන්න',
+                    feat_ats: 'ATS-හිතකාමී', feat_ai: 'AI ලිවීම', feat_pdf: 'PDF නිර්මාණය',
+                    templates_title: 'වෘත්තීය ටෙම්ප්ලේට්', templates_subtitle: 'නවීන, සරල, සමාගම් සහ ගල්ෆ්-විශේෂිත නිර්මාණ වලින් තෝරන්න',
+                    tpl_modern: 'නවීන', tpl_modern_desc: 'පැති තීරුව සහිත පිරිසිදු දෙපේළිය',
+                    tpl_simple: 'සරල', tpl_simple_desc: 'අවම සහ තේජවන්ත',
+                    tpl_corporate: 'සමාගම්', tpl_corporate_desc: 'සාම්ප්‍රදායික සහ නිල',
+                    tpl_gulf: 'ගල්ෆ් / ATS', tpl_gulf_desc: 'බඳවාගැනීම් නිලධාරීන් සඳහා විශේෂිත',
+                    how_title: 'එය ක්‍රියාත්මක වන්නේ කෙසේද',
+                    step1_title: 'පෝරමය පුරවන්න', step1_desc: 'ඔබේ විස්තර, අධ්‍යාපනය සහ අත්දැකීම් ඇතුළත් කරන්න',
+                    step2_title: 'AI වැඩිදුරටත්', step2_desc: 'අපගේ AI වෘත්තීය සාරාංශ ලියයි සහ පෙළ විශේෂාංග ගත කරයි',
+                    step3_title: 'ටෙම්ප්ලේට් තෝරන්න', step3_desc: 'නවීන, සමාගම්, හෝ ATS-හිතකාමී නිර්මාණ වලින් තෝරන්න',
+                    step4_title: 'PDF බාගත කරන්න', step4_desc: 'QR කේතය සහ පෝර්ට්ෆෝලියෝ සම්බන්ධතාව සහිත ඔබේ CV ලබා ගන්න',
+                    feat_lang_title: 'සිංහල + ඉංග්‍රීසි', feat_lang_desc: 'සම්පූර්ණ ද්විභාෂා සහාය. නිසි අකුරු සහ ආකෘතිකරණය සහිත සිංහල හෝ ඉංග්‍රීසි භාෂාවෙන් CV සාදන්න.',
+                    feat_ai_title: 'AI පෙළ ලිවීම', feat_ai_desc: 'AI ඔබේ කර්මාන්තයට සමඟිකරණය කළ වෘත්තීය සාරාංශ, රැකියා විස්තර සහ ආවරණ පත්‍ර ජනනය කරයි.',
+                    feat_qr_title: 'QR කේතය සහ පෝර්ට්ෆෝලියෝ', feat_qr_desc: 'ඔබේ CV තුළ සෘජුවම ඔබේ මාර්ගගත පෝර්ට්ෆෝලියෝව හෝ LinkedIn පැතිකඩට සම්බන්ධ වන QR කේතයක් එක් කරන්න.',
+                    auth_welcome: 'CV Builder Pro වෙත සාදරයෙන් පිළිගනිමු', auth_subtitle: 'AI සමඟ වෘත්තීය CV සාදන්න',
+                    tab_login: 'පිවිසෙන්න', tab_register: 'ලියාපදිංචි වන්න',
+                    label_email: 'ඊමේල්', label_password: 'මුරපදය', label_name: 'සම්පූර්ණ නම',
+                    btn_login: 'පිවිසෙන්න', btn_register: 'ගිණුම සාදන්න', btn_linkedin: 'LinkedIn වෙතින් ආයාත කරන්න',
+                    dash_overview: 'දළ විශ්ලේෂණය', dash_create: 'CV සාදන්න', dash_saved: 'සුරකින ලද CV',
+                    dash_cover: 'ආවරණ පත්', dash_jobs: 'රැකියා ගැළපීම',
+                    dash_welcome: 'නැවත සාදරයෙන්,', dash_subtitle: 'ඔබේ CV සහ රැකියා අයදුම් කළමනාකරණය කරන්න',
+                    stat_cvs: 'සාදන ලද CV', stat_letters: 'ආවරණ පත්', stat_jobs: 'රැකියා ගැළපීම්',
+                    recent_cvs: 'මෑත CV', btn_new_cv: '+ නව CV', no_cvs: 'තවමත් CV නැත. පළමු එක සාදන්න!',
+                    step_personal: 'පුද්ගලික', step_education: 'අධ්‍යාපනය', step_skills: 'කුසලතා',
+                    step_experience: 'අත්දැකීම', step_template: 'ටෙම්ප්ලේට්',
+                    title_personal: 'පුද්ගලික තොරතුරු', title_education: 'අධ්‍යාපනය',
+                    title_skills: 'කුසලතා', title_experience: 'වැඩ අත්දැකීම',
+                    title_template: 'ටෙම්ප්ලේට් තෝරන්න', title_settings: 'CV සැකසුම්',
+                    label_fullname: 'සම්පූර්ණ නම', label_title: 'වෘත්තීය තනතුර',
+                    label_phone: 'දුරකථන', label_address: 'ලිපිනය',
+                    label_portfolio: 'පෝර්ට්ෆෝලියෝ / වෙබ් අඩවිය', label_summary: 'වෘත්තීය සාරාංශය',
+                    label_photo: 'පැතිකඩ ඡායාරූපය', hint_photo: 'වෛකල්පික. නවීන සහ සමාගම් ටෙම්ප්ලේට් සඳහා නිර්දේශිතයි.',
+                    label_include_photo: 'CV තුළ ඡායාරූපය ඇතුළත් කරන්න',
+                    btn_ai_write: 'AI ලියන්න', btn_add_edu: 'අධ්‍යාපනය එක් කරන්න', btn_add_exp: 'අත්දැකීම එක් කරන්න',
+                    label_skills: 'ඔබේ කුසලතා එක් කරන්න', hint_skills: 'කුසලතා එක් කිරීමට ටයිප් කරන්න...',
+                    ai_suggest_title: 'AI නිර්දේශිත කුසලතා', btn_get_suggestions: 'ඔබේ තනතුර මත පදනම්ව නිර්දේශ ලබා ගන්න',
+                    label_languages: 'භාෂා',
+                    setting_ats: 'ATS-හිතකාමී මාදිලිය', setting_ats_desc: 'ග්‍රැෆික් ඉවත් කරයි, අයදුම්කරු ලුහුබැඳීමේ පද්ධති සඳහා සම්මත අකුරු භාවිතා කරයි',
+                    setting_qr: 'QR කේතය ඇතුළත් කරන්න', setting_qr_desc: 'ඔබේ පෝර්ට්ෆෝලියෝව හෝ LinkedIn වෙත සම්බන්ධ වේ',
+                    label_color: 'Accent වර්ණය',
+                    btn_back: 'ආපසු', btn_next: 'ඊළඟ පියවර', btn_generate: 'AI සමඟ CV ජනනය කරන්න',
+                    live_preview: 'සජීවි පෙරදසුන', btn_download: 'PDF බාගත කරන්න', btn_full_preview: 'සම්පූර්ණ පෙරදසුන',
+                    btn_back_builder: 'සංස්කරණය වෙත ආපසු',
+                    templates_gallery_title: 'ටෙම්ප්ලේට් ගැලරිය', templates_gallery_subtitle: 'ඔබේ කර්මාන්තය සහ වෘත්තීය මට්ටම සඳහා පරිපූර්ණ නිර්මාණය තෝරන්න',
+                    tpl_modern_long: 'නිර්මාණාත්මක කර්මාන්ත, තාක්ෂණික, සහ අලෙවිකරණ වෘත්තිකයින් සඳහා හොඳමයි. කුසලතා සහ සම්බන්ධතා තොරතුරු සහිත වර්ණවත් පැති තීරුවක් ඇත.',
+                    tpl_simple_long: 'බොහෝ හිස් ඉඩ සහිත අවම නිර්මාණය. අකාඩමික, වෛද්‍ය, සහ විධායක තනතුරු සඳහා පරිපූර්ණයි.',
+                    tpl_corporate_long: 'Serif අකුරු සහිත සාම්ප්‍රදායික ආකෘතිය. බැංකු, නීති, රජය, සහ ජ්‍යෙෂ්ඨ කළමනාකරණ තනතුරු සඳහා ඉදිරිපත් කරයි.',
+                    tpl_gulf_long: 'ගල්ෆ් රටවල් සහ අයදුම්කරු ලුහුබැඳීමේ පද්ධති සඳහා විශේෂිත යන්ත්‍ර-කියවිය හැකි ආකෘතිය. ග්‍රැෆික් නැත.',
+                    btn_use_template: 'මෙම ටෙම්ප්ලේට් භාවිතා කරන්න',
+                    job_title: 'AI රැකියා ගැළපීම', job_subtitle: 'ඔබේ CV උඩුගත කරන්න හෝ සුරකින ලද එකක් භාවිතා කර ගැළපෙන රැකියා සොයා ගන්න',
+                    job_select_cv: 'ඔබේ CV තෝරන්න', job_or: 'හෝ ඔබේ කුසලතා අලවන්න:',
+                    btn_find_jobs: 'ගැළපෙන රැකියා සොයන්න', job_tips_title: 'ඉඟි',
+                    job_tip1: 'වඩා හොඳ ගැළපීම් සඳහා තවත් කුසලතා එක් කරන්න', job_tip2: 'ඔබේ CV යාවත්කාලීනව තබා ගන්න', job_tip3: 'කර්මාන්ත-සම්මත මූල පද භාවිතා කරන්න',
+                    job_empty: 'ඔබේ CV තෝරා "ගැළපෙන රැකියා සොයන්න" ක්ලික් කර ප්‍රතිඵල බලන්න',
+                    cl_title: 'AI ආවරණ පත් ජනකය', cl_subtitle: 'තත්පර කිහිපයකින් අනුවර්තිත ආවරණ පත් ජනනය කරන්න',
+                    cl_select_cv: 'CV තෝරන්න', cl_company: 'සමාගමේ නම', cl_job_title: 'රැකියා තනතුර',
+                    cl_job_desc: 'රැකියා විස්තරය', cl_tone: 'ස්වරය',
+                    tone_professional: 'වෘත්තීය', tone_friendly: 'හිතකර', tone_assertive: 'ධෂ්ට',
+                    btn_generate_cl: 'ආවරණ පත් ජනනය කරන්න', cl_preview: 'පෙරදසුන', cl_generating: 'AI ඔබේ පත්‍රය ලියමින් සිටී...',
+                    ai_generating_title: 'AI ඔබේ CV සාදමින් සිටී', ai_generating_desc: 'පෙළ විශේෂාංග ගත කිරීම, ATS අනුකූලතාව පරීක්ෂා කිරීම, සහ ආකෘතිකරණය...',
+                    ai_step1: 'ඔබේ පැතිකඩ විශ්ලේෂණය කරමින්...', ai_step2: 'වෘත්තීය සාරාංශය ලියමින්...',
+                    ai_step3: 'ATS මූල පද සඳහා විශේෂාංග ගත කිරීම...', ai_step4: 'ටෙම්ප්ලේට් සහ ආකෘතිකරණය යොදා ගනිමින්...',
+                    btn_use: 'ටෙම්ප්ලේට් භාවිතා කරන්න', pro_title: 'Pro වෙත යන්න', pro_desc: 'සියලු ටෙම්ප්ලේට් සහ AI විශේෂාංග අගුළු හරින්න', btn_upgrade: 'දැන් උත්ශ්‍රේණි කරන්න'
+                }
+            },
+
+            jobsDB: [
+                { title: 'Senior Software Engineer', company: 'TechCorp Lanka', location: 'Colombo, Sri Lanka', skills: ['JavaScript', 'React', 'Node.js', 'TypeScript', 'AWS'], type: 'Full-time', salary: 'Rs. 300,000 - 500,000' },
+                { title: 'Marketing Manager', company: 'BrandHub International', location: 'Colombo, Sri Lanka', skills: ['Marketing', 'SEO', 'Social Media', 'Content Strategy', 'Analytics'], type: 'Full-time', salary: 'Rs. 200,000 - 350,000' },
+                { title: 'Data Analyst', company: 'DataSystems PLC', location: 'Remote', skills: ['Python', 'SQL', 'Excel', 'Power BI', 'Statistics'], type: 'Remote', salary: 'Rs. 150,000 - 280,000' },
+                { title: 'HR Specialist', company: 'PeopleFirst HR', location: 'Kandy, Sri Lanka', skills: ['Recruiting', 'HRIS', 'Communication', 'Labor Law', 'Excel'], type: 'Full-time', salary: 'Rs. 120,000 - 200,000' },
+                { title: 'Graphic Designer', company: 'CreativeStudio', location: 'Colombo, Sri Lanka', skills: ['Photoshop', 'Illustrator', 'Figma', 'Branding', 'Creativity'], type: 'Contract', salary: 'Rs. 100,000 - 180,000' },
+                { title: 'Project Manager', company: 'BuildRight Construction', location: 'Galle, Sri Lanka', skills: ['Project Management', 'Agile', 'Scrum', 'Leadership', 'Communication'], type: 'Full-time', salary: 'Rs. 250,000 - 400,000' }
+            ],
+
+            init() {
+                this.loadState();
+                this.setupEventListeners();
+                this.updateAuthUI();
+                this.updateLanguage();
+                this.navigate('home');
+                this.preloadDemoData();
+            },
+
+            loadState() {
+                const saved = localStorage.getItem('appState');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    this.state.cvs = parsed.cvs || [];
+                    this.state.coverLetters = parsed.coverLetters || [];
+                }
+            },
+
+            saveState() {
+                localStorage.setItem('appState', JSON.stringify({
+                    cvs: this.state.cvs,
+                    coverLetters: this.state.coverLetters
+                }));
+            },
+
+            setupEventListeners() {
+                window.addEventListener('popstate', () => {
+                    const page = location.hash.slice(1) || 'home';
+                    this.navigate(page, false);
+                });
+            },
+
+            navigate(page, pushState = true) {
+                if (pushState) history.pushState(null, '', `#${page}`);
+                document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+                const target = document.getElementById(`page-${page}`);
+                if (target) {
+                    target.classList.remove('hidden');
+                    window.scrollTo(0, 0);
+                }
+                
+                if (page === 'dashboard') this.renderDashboard();
+                if (page === 'builder') this.renderBuilder();
+                if (page === 'jobmatcher') this.initJobMatcher();
+                if (page === 'coverletter') this.initCoverLetter();
+                
+                this.updateLanguage();
+            },
+
+            toggleLanguage() {
+                this.state.lang = this.state.lang === 'en' ? 'si' : 'en';
+                localStorage.setItem('lang', this.state.lang);
+                document.getElementById('lang-label').textContent = this.state.lang.toUpperCase();
+                this.updateLanguage();
+            },
+
+            updateLanguage() {
+                const t = this.translations[this.state.lang];
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (t[key]) el.textContent = t[key];
+                });
+            },
+
+            updateAuthUI() {
+                const authButtons = document.getElementById('auth-buttons');
+                const userMenu = document.getElementById('user-menu');
+                if (this.state.user) {
+                    authButtons.classList.add('hidden');
+                    userMenu.classList.remove('hidden');
+                    document.getElementById('user-name').textContent = this.state.user.name;
+                    document.getElementById('dash-username').textContent = this.state.user.name;
+                } else {
+                    authButtons.classList.remove('hidden');
+                    userMenu.classList.add('hidden');
+                }
+            },
+
+            switchAuthTab(tab) {
+                document.getElementById('tab-login').className = tab === 'login' ? 'flex-1 py-2 rounded-md text-sm font-medium transition bg-white shadow-sm text-gray-900' : 'flex-1 py-2 rounded-md text-sm font-medium transition text-gray-500';
+                document.getElementById('tab-register').className = tab === 'register' ? 'flex-1 py-2 rounded-md text-sm font-medium transition bg-white shadow-sm text-gray-900' : 'flex-1 py-2 rounded-md text-sm font-medium transition text-gray-500';
+                document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
+                document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
+            },
+
+            handleLogin(e) {
+                e.preventDefault();
+                this.state.user = { name: 'Demo User', email: 'demo@example.com' };
+                localStorage.setItem('user', JSON.stringify(this.state.user));
+                this.updateAuthUI();
+                this.navigate('dashboard');
+            },
+
+            handleRegister(e) {
+                e.preventDefault();
+                const name = document.getElementById('reg-name').value;
+                const email = document.getElementById('reg-email').value;
+                this.state.user = { name, email };
+                localStorage.setItem('user', JSON.stringify(this.state.user));
+                this.updateAuthUI();
+                this.navigate('dashboard');
+            },
+
+            logout() {
+                this.state.user = null;
+                localStorage.removeItem('user');
+                this.updateAuthUI();
+                this.navigate('home');
+            },
+
+            simulateLinkedIn() {
+                const btn = event.currentTarget;
+                btn.innerHTML = '<i class="fab fa-linkedin fa-spin"></i> Connecting...';
+                setTimeout(() => {
+                    this.state.user = { name: 'Alex Fernando', email: 'alex@linkedin.com', linkedin: true };
+                    localStorage.setItem('user', JSON.stringify(this.state.user));
+                    this.updateAuthUI();
+                    
+                    // Pre-fill some data
+                    document.getElementById('field-name').value = 'Alex Fernando';
+                    document.getElementById('field-title').value = 'Senior Software Engineer';
+                    document.getElementById('field-email').value = 'alex@example.com';
+                    document.getElementById('field-linkedin').value = 'linkedin.com/in/alexfernando';
+                    
+                    this.navigate('builder');
+                    btn.innerHTML = '<i class="fab fa-linkedin"></i> Import from LinkedIn';
+                }, 1500);
+            },
+
+            startBuilding() {
+                this.state.currentCV = {
+                    personal: {}, education: [], experience: [], skills: [], languages: [],
+                    template: 'modern', color: '#4F46E5',
+                    settings: { atsFriendly: false, includeQR: false, includePhoto: true },
+                    photoData: null
+                };
+                this.state.currentStep = 1;
+                this.navigate('builder');
+            },
+
+            selectTemplateAndBuild(template) {
+                this.startBuilding();
+                this.state.currentCV.template = template;
+                setTimeout(() => this.selectTemplate(template), 100);
+            },
+
+            renderBuilder() {
+                this.updateStepIndicators();
+                document.querySelectorAll('.form-step').forEach((el, i) => {
+                    el.classList.toggle('hidden', i + 1 !== this.state.currentStep);
+                });
+                
+                document.getElementById('btn-prev').classList.toggle('hidden', this.state.currentStep === 1);
+                document.getElementById('btn-next').classList.toggle('hidden', this.state.currentStep === 5);
+                document.getElementById('btn-generate').classList.toggle('hidden', this.state.currentStep !== 5);
+                
+                // Update button text
+                const nextBtn = document.getElementById('btn-next');
+                if (this.state.currentStep === 4) {
+                    nextBtn.querySelector('span').textContent = this.state.lang === 'si' ? 'ටෙම්ප්ලේට් වෙත' : 'To Template';
+                } else {
+                    nextBtn.querySelector('span').textContent = this.translations[this.state.lang].btn_next;
+                }
+                
+                this.renderPreview();
+                
+                // Initialize dynamic lists
+                if (this.state.currentStep === 2 && this.state.currentCV.education.length === 0) this.addEducation();
+                if (this.state.currentStep === 4 && this.state.currentCV.experience.length === 0) this.addExperience();
+            },
+
+            updateStepIndicators() {
+                for (let i = 1; i <= 5; i++) {
+                    const indicator = document.getElementById(`step-${i}-indicator`);
+                    const line = document.getElementById(`progress-line-${i}`);
+                    
+                    if (i < this.state.currentStep) {
+                        indicator.className = 'w-10 h-10 rounded-full border-2 border-green-500 bg-green-500 text-white flex items-center justify-center font-bold step-indicator step-completed';
+                        indicator.innerHTML = '<i class="fas fa-check"></i>';
+                        if (line) line.style.width = '100%';
+                    } else if (i === this.state.currentStep) {
+                        indicator.className = 'w-10 h-10 rounded-full border-2 border-primary bg-primary text-white flex items-center justify-center font-bold step-indicator step-active';
+                        indicator.textContent = i;
+                        if (line) line.style.width = '0%';
+                    } else {
+                        indicator.className = 'w-10 h-10 rounded-full border-2 border-gray-300 text-gray-400 flex items-center justify-center font-bold step-indicator';
+                        indicator.textContent = i;
+                        if (line) line.style.width = '0%';
+                    }
+                }
+            },
+
+            nextStep() {
+                if (this.state.currentStep < 5) {
+                    this.saveCurrentStepData();
+                    this.state.currentStep++;
+                    this.renderBuilder();
+                }
+            },
+
+            prevStep() {
+                if (this.state.currentStep > 1) {
+                    this.saveCurrentStepData();
+                    this.state.currentStep--;
+                    this.renderBuilder();
+                }
+            },
+
+            saveCurrentStepData() {
+                if (this.state.currentStep === 1) {
+                    this.state.currentCV.personal = {
+                        name: document.getElementById('field-name').value,
+                        title: document.getElementById('field-title').value,
+                        email: document.getElementById('field-email').value,
+                        phone: document.getElementById('field-phone').value,
+                        linkedin: document.getElementById('field-linkedin').value,
+                        portfolio: document.getElementById('field-portfolio').value,
+                        address: document.getElementById('field-address').value,
+                        summary: document.getElementById('field-summary').value
+                    };
+                }
+            },
+
+            handlePhotoUpload(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    this.state.currentCV.photoData = event.target.result;
+                    const preview = document.getElementById('photo-preview');
+                    preview.innerHTML = `<img src="${event.target.result}" class="w-full h-full object-cover">`;
+                };
+                reader.readAsDataURL(file);
+            },
+
+            togglePhoto() {
+                this.state.currentCV.settings.includePhoto = document.getElementById('include-photo').checked;
+                this.renderPreview();
+            },
+
+            addEducation() {
+                const id = Date.now();
+                const div = document.createElement('div');
+                div.className = 'bg-gray-50 rounded-xl p-4 border border-gray-200 animate-fade-in';
+                div.dataset.id = id;
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-3">
+                        <h4 class="font-medium text-sm text-gray-700">Education #${this.state.currentCV.education.length + 1}</h4>
+                        <button onclick="App.removeEducation(${id})" class="text-red-400 hover:text-red-600 transition"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-3">
+                        <input type="text" class="edu-school w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none text-sm" placeholder="University / School">
+                        <input type="text" class="edu-degree w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none text-sm" placeholder="Degree / Certificate">
+                        <input type="text" class="edu-year w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none text-sm" placeholder="Year (e.g. 2018 - 2022)">
+                        <input type="text" class="edu-gpa w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none text-sm" placeholder="GPA (optional)">
+                    </div>
+                `;
+                document.getElementById('education-list').appendChild(div);
+                this.state.currentCV.education.push({ id, school: '', degree: '', year: '', gpa: '' });
+            },
+
+            removeEducation(id) {
+                const el = document.querySelector(`[data-id="${id}"]`);
+                if (el) el.remove();
+                this.state.currentCV.education = this.state.currentCV.education.filter(e => e.id !== id);
+            },
+
+            addExperience() {
+                const id = Date.now();
+                const div = document.createElement('div');
+                div.className = 'bg-gray-50 rounded-xl p-4 border border-gray-200 animate-fade-in';
+                div.dataset.id = id;
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-3">
+                        <h4 class="font-medium text-sm text-gray-700">Experience #${this.state.currentCV.experience.length + 1}</h4>
+                        <button onclick="App.removeExperience(${id})" class="text-red-400 hover:text-red-600 transition"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="grid md:grid-cols-2 gap-3">
+                            <input type="text" class="exp-company w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none text-sm" placeholder="Company Name">
+                            <input type="text" class="exp-role w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none text-sm" placeholder="Job Title">
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-3">
+                            <input type="text" class="exp-duration w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none text-sm" placeholder="Duration (e.g. Jan 2020 - Present)">
+                            <input type="text" class="exp-location w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none text-sm" placeholder="Location">
+                        </div>
+                        <div class="relative">
+                            <textarea class="exp-desc w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary outline-none text-sm" rows="3" placeholder="Job description and achievements..."></textarea>
+                            <button type="button" onclick="App.enhanceExperience(${id})" class="absolute bottom-2 right-2 px-2 py-1 bg-primary/10 text-primary rounded text-xs hover:bg-primary/20 transition">
+                                <i class="fas fa-magic"></i> AI
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('experience-list').appendChild(div);
+                this.state.currentCV.experience.push({ id, company: '', role: '', duration: '', location: '', desc: '' });
+            },
+
+            removeExperience(id) {
+                const el = document.querySelector(`[data-id="${id}"]`);
+                if (el) el.remove();
+                this.state.currentCV.experience = this.state.currentCV.experience.filter(e => e.id !== id);
+            },
+
+            addSkill() {
+                const input = document.getElementById('skill-input');
+                const skill = input.value.trim();
+                if (!skill) return;
+                
+                if (!this.state.currentCV.skills.includes(skill)) {
+                    this.state.currentCV.skills.push(skill);
+                    this.renderSkills();
+                }
+                input.value = '';
+                input.focus();
+            },
+
+            removeSkill(skill) {
+                this.state.currentCV.skills = this.state.currentCV.skills.filter(s => s !== skill);
+                this.renderSkills();
+            },
+
+            renderSkills() {
+                const container = document.getElementById('skills-container');
+                const noMsg = document.getElementById('no-skills-msg');
+                
+                if (this.state.currentCV.skills.length === 0) {
+                    container.innerHTML = '';
+                    container.appendChild(noMsg);
+                    noMsg.classList.remove('hidden');
+                    return;
+                }
+                
+                noMsg.classList.add('hidden');
+                container.innerHTML = '';
+                this.state.currentCV.skills.forEach(skill => {
+                    const tag = document.createElement('span');
+                    tag.className = 'skill-tag';
+                    tag.innerHTML = `${skill} <button onclick="App.removeSkill('${skill}')"><i class="fas fa-times"></i></button>`;
+                    container.appendChild(tag);
+                });
+            },
+
+            suggestSkills() {
+                const title = document.getElementById('field-title').value.toLowerCase();
+                const suggestions = {
+                    'engineer': ['JavaScript', 'Python', 'React', 'Node.js', 'AWS', 'Docker', 'Git', 'Agile'],
+                    'developer': ['HTML/CSS', 'JavaScript', 'React', 'SQL', 'Git', 'REST APIs', 'TypeScript'],
+                    'manager': ['Leadership', 'Project Management', 'Agile', 'Scrum', 'Communication', 'Budgeting'],
+                    'marketing': ['SEO', 'Social Media', 'Content Strategy', 'Google Analytics', 'Copywriting'],
+                    'designer': ['Photoshop', 'Illustrator', 'Figma', 'UI/UX', 'Branding', 'Prototyping'],
+                    'analyst': ['Excel', 'SQL', 'Python', 'Power BI', 'Statistics', 'Data Visualization'],
+                    'default': ['Communication', 'Problem Solving', 'Teamwork', 'Time Management', 'Microsoft Office']
+                };
+                
+                let matched = suggestions.default;
+                for (const key in suggestions) {
+                    if (title.includes(key)) {
+                        matched = suggestions[key];
+                        break;
+                    }
+                }
+                
+                const container = document.getElementById('ai-suggested-skills');
+                container.innerHTML = matched.map(s => 
+                    `<button onclick="App.addSuggestedSkill('${s}')" class="px-3 py-1.5 bg-white border border-indigo-200 rounded-lg text-sm text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 transition">${s} <i class="fas fa-plus text-xs ml-1"></i></button>`
+                ).join('');
+            },
+
+            addSuggestedSkill(skill) {
+                if (!this.state.currentCV.skills.includes(skill)) {
+                    this.state.currentCV.skills.push(skill);
+                    this.renderSkills();
+                }
+            },
+
+            enhanceExperience(id) {
+                const el = document.querySelector(`[data-id="${id}"]`);
+                const descEl = el.querySelector('.exp-desc');
+                const current = descEl.value;
+                if (!current) return;
+                
+                const enhancements = [
+                    'Led cross-functional teams to deliver projects 20% ahead of schedule.',
+                    'Implemented process improvements resulting in 30% efficiency gains.',
+                    'Managed budgets exceeding $500K with zero overruns.',
+                    'Trained and mentored 5 junior staff members.',
+                    'Reduced operational costs by 15% through strategic optimization.',
+                    'Achieved 99.9% customer satisfaction rating.'
+                ];
+                
+                const randomEnhancement = enhancements[Math.floor(Math.random() * enhancements.length)];
+                descEl.value = current + (current.endsWith('.') ? ' ' : '. ') + randomEnhancement;
+            },
+
+            generateSummary() {
+                const title = document.getElementById('field-title').value;
+                if (!title) {
+                    alert(this.state.lang === 'si' ? 'කරුණාකර පළමුව වෘත්තීය තනතුර ඇතුළත් කරන්න' : 'Please enter your professional title first');
+                    return;
+                }
+                
+                const status = document.getElementById('summary-status');
+                status.textContent = this.state.lang === 'si' ? 'AI ලියමින්...' : 'AI is writing...';
+                status.className = 'text-xs text-primary mt-1 ai-cursor';
+                
+                const summaries = {
+                    'engineer': 'Results-driven software engineer with 5+ years of experience designing, developing, and maintaining scalable applications. Proficient in modern web technologies and cloud infrastructure. Passionate about writing clean, efficient code and solving complex technical challenges.',
+                    'developer': 'Creative full-stack developer with expertise in building responsive web applications. Strong problem-solving abilities and a keen eye for UI/UX design. Committed to continuous learning and staying current with emerging technologies.',
+                    'manager': 'Dynamic project manager with a proven track record of leading cross-functional teams to deliver complex initiatives on time and within budget. Skilled in Agile methodologies, stakeholder management, and strategic planning.',
+                    'marketing': 'Strategic marketing professional with expertise in digital campaigns, brand development, and data-driven decision making. Demonstrated ability to increase brand awareness and drive revenue growth through innovative marketing strategies.',
+                    'designer': 'Innovative graphic designer with a passion for creating visually compelling designs that communicate brand stories effectively. Proficient in industry-standard design tools with a strong understanding of typography, color theory, and layout principles.',
+                    'analyst': 'Detail-oriented data analyst with strong statistical background and expertise in data visualization. Skilled at transforming complex datasets into actionable business insights that drive strategic decision-making.',
+                    'default': 'Dedicated professional with strong work ethic and excellent communication skills. Proven ability to manage multiple priorities while maintaining attention to detail. Seeking to contribute expertise and grow within a dynamic organization.'
+                };
+                
+                let summary = summaries.default;
+                for (const key in summaries) {
+                    if (title.toLowerCase().includes(key)) {
+                        summary = summaries[key];
+                        break;
+                    }
+                }
+                
+                // Simulate typing
+                const textarea = document.getElementById('field-summary');
+                textarea.value = '';
+                let i = 0;
+                const interval = setInterval(() => {
+                    textarea.value += summary[i];
+                    i++;
+                    if (i >= summary.length) {
+                        clearInterval(interval);
+                        status.textContent = this.state.lang === 'si' ? 'AI සාරාංශය ජනනය කළා!' : 'AI summary generated!';
+                        status.className = 'text-xs text-green-600 mt-1';
+                        setTimeout(() => status.textContent = '', 3000);
+                    }
+                }, 15);
+            },
+
+            selectTemplate(template) {
+                this.state.currentCV.template = template;
+                document.querySelectorAll('.template-card').forEach(card => {
+                    const isSelected = card.dataset.template === template;
+                    card.classList.toggle('selected', isSelected);
+                    card.querySelector('.check-fill').classList.toggle('hidden', !isSelected);
+                    card.querySelector('.check-circle').className = `w-6 h-6 rounded-full border-2 flex items-center justify-center check-circle ${isSelected ? 'border-primary' : 'border-gray-300'}`;
+                });
+                this.renderPreview();
+            },
+
+            setColor(color) {
+                this.state.currentCV.color = color;
+                this.renderPreview();
+            },
+
+            toggleATS() {
+                this.state.currentCV.settings.atsFriendly = document.getElementById('setting-ats').checked;
+                this.renderPreview();
+            },
+
+            toggleQR() {
+                this.state.currentCV.settings.includeQR = document.getElementById('setting-qr').checked;
+                this.renderPreview();
+            },
+
+            collectFormData() {
+                // Personal
+                this.state.currentCV.personal = {
+                    name: document.getElementById('field-name').value,
+                    title: document.getElementById('field-title').value,
+                    email: document.getElementById('field-email').value,
+                    phone: document.getElementById('field-phone').value,
+                    linkedin: document.getElementById('field-linkedin').value,
+                    portfolio: document.getElementById('field-portfolio').value,
+                    address: document.getElementById('field-address').value,
+                    summary: document.getElementById('field-summary').value
+                };
+
+                // Education
+                this.state.currentCV.education = [];
+                document.querySelectorAll('#education-list > div').forEach(el => {
+                    this.state.currentCV.education.push({
+                        school: el.querySelector('.edu-school').value,
+                        degree: el.querySelector('.edu-degree').value,
+                        year: el.querySelector('.edu-year').value,
+                        gpa: el.querySelector('.edu-gpa').value
+                    });
+                });
+
+                // Experience
+                this.state.currentCV.experience = [];
+                document.querySelectorAll('#experience-list > div').forEach(el => {
+                    this.state.currentCV.experience.push({
+                        company: el.querySelector('.exp-company').value,
+                        role: el.querySelector('.exp-role').value,
+                        duration: el.querySelector('.exp-duration').value,
+                        location: el.querySelector('.exp-location').value,
+                        desc: el.querySelector('.exp-desc').value
+                    });
+                });
+
+                // Languages
+                this.state.currentCV.languages = [
+                    document.getElementById('lang-1').value,
+                    document.getElementById('lang-2').value,
+                    document.getElementById('lang-3').value
+                ].filter(Boolean);
+            },
+
+            renderPreview() {
+                this.collectFormData();
+                const container = document.getElementById('cv-preview-container');
+                const fullPreview = document.getElementById('full-cv-preview');
+                
+                const html = this.generateCVHTML();
+                container.innerHTML = html;
+                fullPreview.innerHTML = html;
+                
+                // Update ATS score
+                const score = this.calculateATSScore();
+                document.getElementById('ats-score').textContent = `ATS: ${score}%`;
+                document.getElementById('ats-score').className = `text-xs px-2 py-1 rounded-md font-medium ${score >= 80 ? 'bg-green-100 text-green-700' : score >= 60 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`;
+            },
+
+            generateCVHTML() {
+                const { personal, education, experience, skills, languages, template, color, settings, photoData } = this.state.currentCV;
+                const { atsFriendly, includeQR, includePhoto } = settings;
+                
+                const photoHTML = (includePhoto && photoData && !atsFriendly) 
+                    ? `<img src="${photoData}" style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 4px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">` 
+                    : '';
+                
+                const qrHTML = (includeQR && !atsFriendly) 
+                    ? `<div id="cv-qrcode" style="width: 80px; height: 80px; margin-top: 10px;"></div>` 
+                    : '';
+                
+                const contactInfo = [
+                    personal.email,
+                    personal.phone,
+                    personal.address,
+                    personal.linkedin,
+                    personal.portfolio
+                ].filter(Boolean).join(' | ');
+                
+                const skillsHTML = skills.length > 0 
+                    ? skills.map(s => `<span style="display: inline-block; background: ${atsFriendly ? 'none' : color + '20'}; color: ${atsFriendly ? '#000' : color}; padding: 2px 8px; border-radius: 12px; font-size: 0.85em; margin: 2px; ${atsFriendly ? '' : 'border: 1px solid ' + color + '40'}">${s}</span>`).join(' ')
+                    : '';
+                
+                const eduHTML = education.length > 0
+                    ? education.map(e => `
+                        <div style="margin-bottom: 12px;">
+                            <div style="font-weight: 600; ${atsFriendly ? '' : 'color: ' + color}">${e.degree}</div>
+                            <div style="font-size: 0.9em; color: #666;">${e.school} ${e.year ? '| ' + e.year : ''} ${e.gpa ? '| GPA: ' + e.gpa : ''}</div>
+                        </div>
+                    `).join('')
+                    : '';
+                
+                const expHTML = experience.length > 0
+                    ? experience.map(e => `
+                        <div style="margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap;">
+                                <div style="font-weight: 600; ${atsFriendly ? '' : 'color: ' + color}">${e.role}</div>
+                                <div style="font-size: 0.85em; color: #666; font-style: italic;">${e.duration}</div>
+                            </div>
+                            <div style="font-size: 0.9em; color: #555; margin-bottom: 4px;">${e.company}${e.location ? ' — ' + e.location : ''}</div>
+                            <div style="font-size: 0.9em; color: #444; line-height: 1.5;">${e.desc}</div>
+                        </div>
+                    `).join('')
+                    : '';
+                
+                const langHTML = languages.length > 0
+                    ? `<div style="margin-top: 8px; font-size: 0.9em; color: #666;">${languages.join(' • ')}</div>`
+                    : '';
+
+                // QR generation script for preview
+                const qrScript = (includeQR && !atsFriendly) ? `
+                    <script>
+                        setTimeout(() => {
+                            const qrContainer = document.getElementById('cv-qrcode');
+                            if (qrContainer && !qrContainer.querySelector('img')) {
+                                new QRCode(qrContainer, {
+                                    text: '${personal.portfolio || personal.linkedin || personal.email || 'https://cvbuilder.pro'}',
+                                    width: 70,
+                                    height: 70,
+                                    colorDark: '#000000',
+                                    colorLight: '#ffffff',
+                                    correctLevel: QRCode.CorrectLevel.M
+                                });
+                            }
+                        }, 100);
+                    <\/script>
+                ` : '';
+
+                if (template === 'modern') {
+                    return `
+                        <div class="cv-modern" style="font-family: 'Inter', sans-serif; width: 210mm; min-height: 297mm; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <div class="cv-modern-sidebar" style="background: linear-gradient(180deg, ${color} 0%, ${this.darkenColor(color, 20)} 100%);">
+                                <div style="text-align: center; margin-bottom: 2rem;">
+                                    ${photoHTML}
+                                    <h2 style="font-size: 1.5rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0.25rem;">${personal.name || 'Your Name'}</h2>
+                                    <p style="font-size: 0.9rem; opacity: 0.9;">${personal.title || 'Professional Title'}</p>
+                                </div>
+                                
+                                <div style="margin-bottom: 2rem;">
+                                    <h3 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.7; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 0.5rem;">Contact</h3>
+                                    ${personal.email ? `<div style="font-size: 0.85rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-envelope" style="width: 16px;"></i> ${personal.email}</div>` : ''}
+                                    ${personal.phone ? `<div style="font-size: 0.85rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-phone" style="width: 16px;"></i> ${personal.phone}</div>` : ''}
+                                    ${personal.address ? `<div style="font-size: 0.85rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-map-marker-alt" style="width: 16px;"></i> ${personal.address}</div>` : ''}
+                                    ${personal.linkedin ? `<div style="font-size: 0.85rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;"><i class="fab fa-linkedin" style="width: 16px;"></i> LinkedIn</div>` : ''}
+                                    ${personal.portfolio ? `<div style="font-size: 0.85rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-globe" style="width: 16px;"></i> Portfolio</div>` : ''}
+                                    ${qrHTML}
+                                </div>
+                                
+                                <div style="margin-bottom: 2rem;">
+                                    <h3 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.7; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 0.5rem;">Skills</h3>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                        ${skills.map(s => `<span style="background: rgba(255,255,255,0.2); padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.8rem;">${s}</span>`).join('')}
+                                    </div>
+                                </div>
+                                
+                                ${languages.length > 0 ? `
+                                <div>
+                                    <h3 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.7; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 0.5rem;">Languages</h3>
+                                    ${languages.map(l => `<div style="font-size: 0.85rem; margin-bottom: 0.5rem;">${l}</div>`).join('')}
+                                </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="cv-modern-main">
+                                ${personal.summary ? `
+                                <div style="margin-bottom: 2rem;">
+                                    <h3 style="font-size: 1.1rem; font-weight: 700; color: ${color}; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">Professional Summary</h3>
+                                    <p style="line-height: 1.7; color: #444;">${personal.summary}</p>
+                                </div>
+                                ` : ''}
+                                
+                                ${experience.length > 0 ? `
+                                <div style="margin-bottom: 2rem;">
+                                    <h3 style="font-size: 1.1rem; font-weight: 700; color: ${color}; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">Experience</h3>
+                                    ${expHTML}
+                                </div>
+                                ` : ''}
+                                
+                                ${education.length > 0 ? `
+                                <div>
+                                    <h3 style="font-size: 1.1rem; font-weight: 700; color: ${color}; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">Education</h3>
+                                    ${eduHTML}
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        ${qrScript}
+                    `;
+                } else if (template === 'simple') {
+                    return `
+                        <div class="cv-simple" style="font-family: 'Inter', sans-serif; width: 210mm; min-height: 297mm; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <div style="text-align: center; margin-bottom: 2rem;">
+                                ${photoHTML ? `<div style="margin-bottom: 1.5rem;">${photoHTML}</div>` : ''}
+                                <h1 style="font-size: 2.5rem; font-weight: 300; letter-spacing: -0.02em; margin-bottom: 0.5rem; color: #111;">${personal.name || 'Your Name'}</h1>
+                                <p style="font-size: 1.1rem; color: ${color}; font-weight: 500; margin-bottom: 1rem;">${personal.title || 'Professional Title'}</p>
+                                <div class="contact-bar" style="border-bottom: 2px solid #e5e7eb; padding-bottom: 1.5rem; margin-bottom: 2rem; font-size: 0.9rem; color: #666;">
+                                    ${contactInfo}
+                                    ${qrHTML ? `<div style="display: flex; justify-content: center; margin-top: 10px;">${qrHTML}</div>` : ''}
+                                </div>
+                            </div>
+                            
+                            ${personal.summary ? `
+                            <div style="margin-bottom: 2rem;">
+                                <h3 style="font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: #999; margin-bottom: 1rem;">About</h3>
+                                <p style="line-height: 1.7; color: #444;">${personal.summary}</p>
+                            </div>
+                            ` : ''}
+                            
+                            ${experience.length > 0 ? `
+                            <div style="margin-bottom: 2rem;">
+                                <h3 style="font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: #999; margin-bottom: 1rem;">Experience</h3>
+                                ${expHTML}
+                            </div>
+                            ` : ''}
+                            
+                            ${education.length > 0 ? `
+                            <div style="margin-bottom: 2rem;">
+                                <h3 style="font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: #999; margin-bottom: 1rem;">Education</h3>
+                                ${eduHTML}
+                            </div>
+                            ` : ''}
+                            
+                            ${skills.length > 0 ? `
+                            <div style="margin-bottom: 2rem;">
+                                <h3 style="font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: #999; margin-bottom: 1rem;">Skills</h3>
+                                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                    ${skills.map(s => `<span style="border: 1px solid #ddd; padding: 0.4rem 1rem; border-radius: 9999px; font-size: 0.9rem;">${s}</span>`).join('')}
+                                </div>
+                            </div>
+                            ` : ''}
+                            
+                            ${langHTML}
+                        </div>
+                        ${qrScript}
+                    `;
+                } else if (template === 'corporate') {
+                    return `
+                        <div class="cv-corporate" style="font-family: 'Georgia', serif; width: 210mm; min-height: 297mm; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <div class="cv-corporate-header" style="border-bottom: 3px solid ${color}; padding-bottom: 1.5rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h1 style="font-family: 'Playfair Display', serif; color: ${color}; font-size: 2.2rem; margin-bottom: 0.5rem;">${personal.name || 'Your Name'}</h1>
+                                    <p style="font-size: 1.1rem; color: #555; font-style: italic;">${personal.title || 'Professional Title'}</p>
+                                </div>
+                                ${photoHTML ? `<div>${photoHTML.replace('120px', '100px').replace('120px', '100px')}</div>` : ''}
+                            </div>
+                            
+                            <div style="font-size: 0.9rem; color: #555; margin-bottom: 2rem; border-bottom: 1px solid #eee; padding-bottom: 1rem;">
+                                ${contactInfo}
+                                ${qrHTML ? `<div style="float: right; margin-top: -20px;">${qrHTML}</div>` : ''}
+                                <div style="clear: both;"></div>
+                            </div>
+                            
+                            ${personal.summary ? `
+                            <div style="margin-bottom: 2rem;">
+                                <h3 style="font-size: 1rem; font-weight: 700; color: ${color}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">Professional Summary</h3>
+                                <p style="line-height: 1.7; color: #444;">${personal.summary}</p>
+                            </div>
+                            ` : ''}
+                            
+                            <div class="cv-corporate-grid">
+                                <div>
+                                    ${experience.length > 0 ? `
+                                    <div style="margin-bottom: 2rem;">
+                                        <h3 style="font-size: 1rem; font-weight: 700; color: ${color}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">Professional Experience</h3>
+                                        ${expHTML}
+                                    </div>
+                                    ` : ''}
+                                </div>
+                                <div>
+                                    ${education.length > 0 ? `
+                                    <div style="margin-bottom: 2rem;">
+                                        <h3 style="font-size: 1rem; font-weight: 700; color: ${color}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">Education</h3>
+                                        ${eduHTML}
+                                    </div>
+                                    ` : ''}
+                                    
+                                    ${skills.length > 0 ? `
+                                    <div style="margin-bottom: 2rem;">
+                                        <h3 style="font-size: 1rem; font-weight: 700; color: ${color}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">Core Competencies</h3>
+                                        <ul style="list-style: none; padding: 0;">
+                                            ${skills.map(s => `<li style="margin-bottom: 0.5rem; padding-left: 1rem; position: relative;"><span style="position: absolute; left: 0; color: ${color;">▸</span>${s}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                    ` : ''}
+                                    
+                                    ${languages.length > 0 ? `
+                                    <div>
+                                        <h3 style="font-size: 1rem; font-weight: 700; color: ${color}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">Languages</h3>
+                                        ${languages.map(l => `<div style="margin-bottom: 0.5rem; font-size: 0.9rem;">${l}</div>`).join('')}
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        ${qrScript}
+                    `;
+                } else { // gulf / ATS
+                    return `
+                        <div class="cv-gulf" style="font-family: 'Arial', sans-serif; width: 210mm; min-height: 297mm; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <h1 style="text-transform: uppercase; letter-spacing: 0.1em; font-size: 1.8rem; border-bottom: 1px solid #000; padding-bottom: 0.5rem; margin-bottom: 1rem;">${personal.name || 'YOUR NAME'}</h1>
+                            <p style="font-size: 1rem; font-weight: bold; margin-bottom: 0.5rem;">${personal.title || 'PROFESSIONAL TITLE'}</p>
+                            <p style="font-size: 0.9rem; margin-bottom: 1.5rem;">${contactInfo}</p>
+                            
+                            ${personal.summary ? `
+                            <h2 style="text-transform: uppercase; font-size: 0.9rem; letter-spacing: 0.05em; border-bottom: 1px solid #ccc; margin-top: 1.5rem; margin-bottom: 0.75rem; font-weight: bold;">PROFESSIONAL SUMMARY</h2>
+                            <p style="line-height: 1.6; margin-bottom: 1rem;">${personal.summary}</p>
+                            ` : ''}
+                            
+                            ${experience.length > 0 ? `
+                            <h2 style="text-transform: uppercase; font-size: 0.9rem; letter-spacing: 0.05em; border-bottom: 1px solid #ccc; margin-top: 1.5rem; margin-bottom: 0.75rem; font-weight: bold;">WORK EXPERIENCE</h2>
+                            ${experience.map(e => `
+                                <div style="margin-bottom: 1rem;">
+                                    <p style="font-weight: bold; margin-bottom: 0.25rem;">${e.role}</p>
+                                    <p style="font-style: italic; margin-bottom: 0.25rem;">${e.company} | ${e.duration}${e.location ? ' | ' + e.location : ''}</p>
+                                    <ul style="list-style-type: square; margin-left: 1.25rem; line-height: 1.5;">
+                                        ${e.desc.split('.').filter(s => s.trim()).map(s => `<li>${s.trim()}.</li>`).join('')}
+                                    </ul>
+                                </div>
+                            `).join('')}
+                            ` : ''}
+                            
+                            ${education.length > 0 ? `
+                            <h2 style="text-transform: uppercase; font-size: 0.9rem; letter-spacing: 0.05em; border-bottom: 1px solid #ccc; margin-top: 1.5rem; margin-bottom: 0.75rem; font-weight: bold;">EDUCATION</h2>
+                            ${education.map(e => `
+                                <div style="margin-bottom: 0.75rem;">
+                                    <p style="font-weight: bold;">${e.degree}</p>
+                                    <p>${e.school}${e.year ? ', ' + e.year : ''}${e.gpa ? ' - GPA: ' + e.gpa : ''}</p>
+                                </div>
+                            `).join('')}
+                            ` : ''}
+                            
+                            ${skills.length > 0 ? `
+                            <h2 style="text-transform: uppercase; font-size: 0.9rem; letter-spacing: 0.05em; border-bottom: 1px solid #ccc; margin-top: 1.5rem; margin-bottom: 0.75rem; font-weight: bold;">SKILLS</h2>
+                            <p style="line-height: 1.6;">${skills.join(' • ')}</p>
+                            ` : ''}
+                            
+                            ${languages.length > 0 ? `
+                            <h2 style="text-transform: uppercase; font-size: 0.9rem; letter-spacing: 0.05em; border-bottom: 1px solid #ccc; margin-top: 1.5rem; margin-bottom: 0.75rem; font-weight: bold;">LANGUAGES</h2>
+                            <p>${languages.join(', ')}</p>
+                            ` : ''}
+                        </div>
+                    `;
+                }
+            },
+
+            darkenColor(hex, percent) {
+                const num = parseInt(hex.replace('#', ''), 16);
+                const amt = Math.round(2.55 * percent);
+                const R = (num >> 16) - amt;
+                const G = (num >> 8 & 0x00FF) - amt;
+                const B = (num & 0x0000FF) - amt;
+                return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 + (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 + (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+            },
+
+            calculateATSScore() {
+                let score = 60;
+                const { personal, education, experience, skills } = this.state.currentCV;
+                
+                if (personal.name && personal.email && personal.title) score += 10;
+                if (personal.summary && personal.summary.length > 50) score += 5;
+                if (education.length > 0) score += 5;
+                if (experience.length > 0) score += 10;
+                if (skills.length >= 5) score += 10;
+                if (this.state.currentCV.settings.atsFriendly) score += 10;
+                if (personal.linkedin || personal.portfolio) score += 5;
+                
+                return Math.min(98, score);
+            },
+
+            generateCV() {
+                this.collectFormData();
+                
+                // Show AI modal
+                const modal = document.getElementById('ai-modal');
+                modal.classList.remove('hidden');
+                
+                const steps = ['ai-step-1', 'ai-step-2', 'ai-step-3', 'ai-step-4'];
+                const progress = document.getElementById('ai-progress');
+                
+                let currentStep = 0;
+                const interval = setInterval(() => {
+                    if (currentStep > 0) {
+                        const prev = document.getElementById(steps[currentStep - 1]);
+                        prev.querySelector('i').className = 'fas fa-check text-green-500';
+                        prev.querySelector('i').classList.remove('fa-spin');
+                    }
+                    
+                    if (currentStep < steps.length) {
+                        const curr = document.getElementById(steps[currentStep]);
+                        curr.querySelector('i').className = 'fas fa-circle-notch fa-spin text-primary';
+                        curr.classList.remove('opacity-40');
+                        progress.style.width = ((currentStep + 1) / steps.length * 100) + '%';
+                    }
+                    
+                    currentStep++;
+                    
+                    if (currentStep > steps.length) {
+                        clearInterval(interval);
+                        setTimeout(() => {
+                            modal.classList.add('hidden');
+                            this.saveCV();
+                            this.navigate('preview');
+                        }, 500);
+                    }
+                }, 800);
+            },
+
+            saveCV() {
+                const cv = { ...this.state.currentCV, id: Date.now(), createdAt: new Date().toLocaleDateString() };
+                this.state.cvs.unshift(cv);
+                this.saveState();
+            },
+
+            renderDashboard() {
+                document.getElementById('stat-cvs').textContent = this.state.cvs.length;
+                document.getElementById('stat-letters').textContent = this.state.coverLetters.length;
+                
+                const list = document.getElementById('saved-cvs-list');
+                if (this.state.cvs.length === 0) {
+                    list.innerHTML = `
+                        <div class="text-center py-12 text-gray-400">
+                            <i class="fas fa-folder-open text-4xl mb-3"></i>
+                            <p>${this.translations[this.state.lang].no_cvs}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                list.innerHTML = this.state.cvs.map((cv, i) => `
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center text-white">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900">${cv.personal.name || 'Untitled CV'}</h4>
+                                <p class="text-sm text-gray-500">${cv.personal.title || 'No title'} • ${cv.template} • ${cv.createdAt}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="App.loadCV(${i})" class="px-3 py-2 text-sm text-primary hover:bg-primary/10 rounded-lg transition">Edit</button>
+                            <button onclick="App.downloadSavedCV(${i})" class="px-3 py-2 text-sm text-green-600 hover:bg-green-50 rounded-lg transition">PDF</button>
+                            <button onclick="App.deleteCV(${i})" class="px-3 py-2 text-sm text-red-500 hover:bg-red-50 rounded-lg transition"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            showSavedCVs() {
+                this.renderDashboard();
+            },
+
+            loadCV(index) {
+                this.state.currentCV = JSON.parse(JSON.stringify(this.state.cvs[index]));
+                this.state.currentStep = 1;
+                this.navigate('builder');
+            },
+
+            deleteCV(index) {
+                if (confirm('Delete this CV?')) {
+                    this.state.cvs.splice(index, 1);
+                    this.saveState();
+                    this.renderDashboard();
+                }
+            },
+
+            downloadSavedCV(index) {
+                this.state.currentCV = JSON.parse(JSON.stringify(this.state.cvs[index]));
+                this.renderPreview();
+                setTimeout(() => this.downloadPDF(), 500);
+            },
+
+            async downloadPDF() {
+                const element = document.getElementById('full-cv-preview').firstElementChild || document.getElementById('cv-preview-container').firstElementChild;
+                if (!element) return;
+                
+                try {
+                    const canvas = await html2canvas(element, {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#ffffff'
+                    });
+                    
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                    
+                    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                    pdf.save(`${this.state.currentCV.personal.name || 'CV'}_CV.pdf`);
+                } catch (err) {
+                    console.error('PDF generation failed:', err);
+                    alert('PDF generation failed. Please try again.');
+                }
+            },
+
+            initJobMatcher() {
+                const select = document.getElementById('matcher-cv-select');
+                select.innerHTML = '<option value="">-- Select a CV --</option>';
+                this.state.cvs.forEach((cv, i) => {
+                    select.innerHTML += `<option value="${i}">${cv.personal.name || 'CV ' + (i+1)} - ${cv.personal.title}</option>`;
+                });
+            },
+
+            findJobs() {
+                const cvIndex = document.getElementById('matcher-cv-select').value;
+                const manualSkills = document.getElementById('matcher-skills').value.toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+                
+                let userSkills = manualSkills;
+                if (cvIndex !== '') {
+                    const cv = this.state.cvs[cvIndex];
+                    userSkills = [...cv.skills.map(s => s.toLowerCase()), ...manualSkills];
+                }
+                
+                if (userSkills.length === 0) {
+                    alert(this.state.lang === 'si' ? 'කරුණාකර කුසලතා ඇතුළත් කරන්න' : 'Please enter some skills');
+                    return;
+                }
+                
+                const results = this.jobsDB.map(job => {
+                    const jobSkills = job.skills.map(s => s.toLowerCase());
+                    const matched = jobSkills.filter(s => userSkills.some(us => us.includes(s) || s.includes(us)));
+                    const matchPercent = Math.round((matched.length / jobSkills.length) * 100);
+                    return { ...job, matchPercent, matchedSkills: matched };
+                }).sort((a, b) => b.matchPercent - a.matchPercent);
+                
+                const container = document.getElementById('job-results');
+                container.innerHTML = results.map(job => `
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h3 class="font-bold text-lg text-gray-900">${job.title}</h3>
+                                <p class="text-gray-600">${job.company} • ${job.location}</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold ${job.matchPercent >= 70 ? 'text-green-600' : job.matchPercent >= 40 ? 'text-yellow-600' : 'text-gray-500'}">${job.matchPercent}%</div>
+                                <div class="text-xs text-gray-500">Match</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            ${job.skills.map(s => `
+                                <span class="px-2 py-1 rounded-md text-xs font-medium ${job.matchedSkills.includes(s.toLowerCase()) ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">
+                                    ${s} ${job.matchedSkills.includes(s.toLowerCase()) ? '<i class="fas fa-check ml-1"></i>' : ''}
+                                </span>
+                            `).join('')}
+                        </div>
+                        
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                            <div class="text-sm text-gray-500">
+                                <span class="mr-4"><i class="fas fa-clock mr-1"></i> ${job.type}</span>
+                                <span><i class="fas fa-money-bill mr-1"></i> ${job.salary}</span>
+                            </div>
+                            <button class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-indigo-600 transition" onclick="alert('Application sent!')">
+                                Apply Now
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            initCoverLetter() {
+                const select = document.getElementById('cl-cv-select');
+                select.innerHTML = '<option value="">-- Select a CV --</option>';
+                this.state.cvs.forEach((cv, i) => {
+                    select.innerHTML += `<option value="${i}">${cv.personal.name || 'CV ' + (i+1)}</option>`;
+                });
+            },
+
+            setCLTone(tone) {
+                this.state.clTone = tone;
+                document.querySelectorAll('.cl-tone-btn').forEach(btn => {
+                    const isActive = btn.dataset.tone === tone;
+                    btn.className = `cl-tone-btn flex-1 py-2 rounded-lg border-2 font-medium text-sm transition ${isActive ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`;
+                });
+            },
+
+            generateCoverLetter() {
+                const cvIndex = document.getElementById('cl-cv-select').value;
+                const company = document.getElementById('cl-company').value;
+                const jobTitle = document.getElementById('cl-job-title').value;
+                const jobDesc = document.getElementById('cl-job-desc').value;
+                
+                if (!company || !jobTitle) {
+                    alert(this.state.lang === 'si' ? 'කරුණාකර සමාගම සහ රැකියා තනතුර ඇතුළත් කරන්න' : 'Please fill in company and job title');
+                    return;
+                }
+                
+                let cv = this.state.currentCV;
+                if (cvIndex !== '') {
+                    cv = this.state.cvs[cvIndex];
+                }
+                
+                const preview = document.getElementById('cl-preview');
+                const generating = document.getElementById('cl-generating');
+                const downloadBtn = document.getElementById('btn-download-cl');
+                
+                preview.innerHTML = '';
+                generating.classList.remove('hidden');
+                downloadBtn.classList.add('hidden');
+                
+                const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                
+                const openings = {
+                    professional: `Dear Hiring Manager,`,
+                    friendly: `Hello ${company} Team,`,
+                    assertive: `Dear Recruitment Team,`
+                };
+                
+                const bodies = {
+                    professional: `I am writing to express my strong interest in the ${jobTitle} position at ${company}. With my background as ${cv.personal.title} and expertise in ${cv.skills.slice(0, 4).join(', ')}, I am confident in my ability to make significant contributions to your team.
+
+My experience has equipped me with a solid foundation in the skills required for this role. ${jobDesc ? 'Your job description highlights needs in areas where I have demonstrated success.' : ''} I am particularly drawn to ${company} because of its reputation for innovation and excellence.
+
+I would welcome the opportunity to discuss how my background, skills, and enthusiasms align with the goals of ${company}. Thank you for considering my application.`,
+
+                    friendly: `I was excited to come across the ${jobTitle} opening at ${company}! As a ${cv.personal.title} with a passion for ${cv.skills[0] || 'this field'}, I would love to bring my skills and energy to your team.
+
+I really admire what ${company} is doing in the industry, and I think my experience with ${cv.skills.slice(0, 3).join(', ')} would be a great fit. I'm always eager to learn and grow, and your company seems like the perfect place to do that.
+
+I'd be thrilled to chat more about how I can contribute. Thanks so much for your time and consideration!`,
+
+                    assertive: `I am applying for the ${jobTitle} position at ${company} because I know I can deliver results. As a ${cv.personal.title}, I have consistently exceeded expectations in roles requiring ${cv.skills.slice(0, 3).join(', ')}.
+
+My track record speaks for itself. I don't just meet requirements—I find ways to improve processes and drive growth. ${company} needs someone who can hit the ground running, and that's exactly what I offer.
+
+I look forward to the opportunity to discuss how I can contribute to ${company}'s continued success.`
+                };
+                
+                const closings = {
+                    professional: `Sincerely,\n${cv.personal.name || 'Your Name'}\n${cv.personal.email || ''}\n${cv.personal.phone || ''}`,
+                    friendly: `Best,\n${cv.personal.name || 'Your Name'}\n${cv.personal.email || ''}`,
+                    assertive: `Regards,\n${cv.personal.name || 'Your Name'}\n${cv.personal.email || ''}\n${cv.personal.phone || ''}`
+                };
+                
+                const letter = `${date}\n\n${company}\n\n${openings[this.state.clTone]}\n\n${bodies[this.state.clTone]}\n\n${closings[this.state.clTone]}`;
+                
+                // Simulate typing
+                let i = 0;
+                const interval = setInterval(() => {
+                    preview.textContent += letter[i];
+                    i++;
+                    if (i >= letter.length) {
+                        clearInterval(interval);
+                        generating.classList.add('hidden');
+                        downloadBtn.classList.remove('hidden');
+                        
+                        // Save cover letter
+                        this.state.coverLetters.push({
+                            company, jobTitle, content: letter, date: new Date().toISOString()
+                        });
+                        this.saveState();
+                    }
+                }, 8);
+            },
+
+            downloadCoverLetterPDF() {
+                const content = document.getElementById('cl-preview').textContent;
+                const pdf = new jspdf.jsPDF();
+                pdf.setFont('helvetica');
+                pdf.setFontSize(11);
+                
+                const splitText = pdf.splitTextToSize(content, 180);
+                pdf.text(splitText, 15, 20);
+                pdf.save('Cover_Letter.pdf');
+            },
+
+            preloadDemoData() {
+                // Add a demo CV if none exists
+                if (this.state.cvs.length === 0) {
+                    this.state.cvs.push({
+                        id: Date.now(),
+                        personal: {
+                            name: 'Samantha Perera',
+                            title: 'Marketing Manager',
+                            email: 'samantha@example.com',
+                            phone: '+94 77 123 4567',
+                            address: 'Colombo, Sri Lanka',
+                            linkedin: 'linkedin.com/in/samanthaperera',
+                            portfolio: '',
+                            summary: 'Results-driven marketing professional with 6+ years of experience in digital marketing, brand strategy, and campaign management. Proven track record of increasing brand awareness by 40% and driving revenue growth through data-driven strategies.'
+                        },
+                        education: [
+                            { school: 'University of Colombo', degree: 'BSc in Business Management', year: '2014 - 2018', gpa: '3.8' }
+                        ],
+                        experience: [
+                            { company: 'BrandHub Lanka', role: 'Senior Marketing Executive', duration: '2021 - Present', location: 'Colombo', desc: 'Led digital marketing campaigns across social media and search engines. Managed a team of 5 marketing specialists. Increased lead generation by 35% year-over-year.' },
+                            { company: 'MediaFirst Agency', role: 'Marketing Coordinator', duration: '2018 - 2021', location: 'Colombo', desc: 'Coordinated marketing events and product launches. Managed relationships with media partners and influencers. Assisted in developing content strategy for 10+ clients.' }
+                        ],
+                        skills: ['Digital Marketing', 'SEO', 'Social Media', 'Google Analytics', 'Content Strategy', 'Brand Management', 'Team Leadership', 'Copywriting'],
+                        languages: ['Sinhala - Native', 'English - Fluent', 'Tamil - Conversational'],
+                        template: 'modern',
+                        color: '#4F46E5',
+                        settings: { atsFriendly: false, includeQR: true, includePhoto: true },
+                        photoData: null,
+                        createdAt: '2024-01-15'
+                    });
+                    this.saveState();
+                }
+            }
+        };
+
+        // Initialize app when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => App.init());
+    </script>
+</body>
+</html>
